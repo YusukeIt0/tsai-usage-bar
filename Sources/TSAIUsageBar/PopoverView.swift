@@ -16,7 +16,7 @@ struct PopoverView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(provider.displayName).font(.headline)
 
-            ForEach(WindowKind.allCases, id: \.self) { kind in
+            ForEach(provider.windows, id: \.self) { kind in
                 windowRow(kind)
             }
 
@@ -43,7 +43,7 @@ struct PopoverView: View {
         let offered = status.snapshot?.offers(kind) ?? true
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(s.windowTitle(kind)).font(.subheadline.weight(.semibold))
+                Text(kind == .month ? s.privateFreeQuota : s.windowTitle(kind)).font(.subheadline.weight(.semibold))
                 Spacer()
                 if let p = display.percent(mode: settings.displayMode) {
                     Text("\(p)%").font(.subheadline.monospacedDigit().weight(.semibold))
@@ -119,6 +119,32 @@ struct PopoverView: View {
                 return AnyView(Text(s.claudeWaiting).font(.caption).foregroundStyle(.secondary))
             }
             return nil
+        case .github:
+            return AnyView(githubNotice)
+        }
+    }
+
+    @ViewBuilder
+    private var githubNotice: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if case .value(let used, _) = model.display(ItemID(.github, .month)), used >= 100 {
+                Label(s.freeQuotaUsedUp, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.orange)
+            }
+            switch model.githubError {
+            case .some(.notConnected):
+                Label(s.githubNotConnected, systemImage: "link").font(.caption).foregroundStyle(.secondary)
+                Button(s.connect) { openSettings() }.controlSize(.small)
+            case .some(.unknownPlan):
+                Label(s.githubUnknownPlan, systemImage: "questionmark.circle").font(.caption).foregroundStyle(.secondary)
+            case .some(.tooManyRepositories):
+                Label(s.githubTooManyRepos, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
+            case .some(.failed):
+                Label(status.snapshot != nil ? "\(s.fetchFailed) · \(s.showingLastValues)" : s.fetchFailed,
+                      systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
+            case .none:
+                EmptyView()
+            }
+            Text("\(s.publicReposFree)\n\(s.githubDelay)").font(.caption2).foregroundStyle(.secondary)
         }
     }
 

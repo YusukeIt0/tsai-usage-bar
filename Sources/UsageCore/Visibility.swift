@@ -26,8 +26,6 @@ public enum ItemVisibility {
     /// or the 7-day window when the plan has no 5-hour limit.
     public static func defaultItem(for provider: Provider, snapshot: ProviderSnapshot) -> ItemID? {
         let reported = snapshot.reportedKinds ?? []
-        if reported.contains(.fiveHour) { return ItemID(provider, .fiveHour) }
-        if reported.contains(.sevenDay) { return ItemID(provider, .sevenDay) }
-        return nil
+        return provider.windows.first(where: reported.contains).map { ItemID(provider, $0) }
     }
 }
