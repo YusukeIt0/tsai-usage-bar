@@ -201,12 +201,50 @@ final class FetchPolicyTests: XCTestCase {
 
 final class LocalizationTests: XCTestCase {
     func testAutomaticLanguage() {
-        XCTAssertEqual(AppLanguage.resolve(.automatic, preferred: ["ja-JP", "en-US"]), .ja)
-        XCTAssertEqual(AppLanguage.resolve(.automatic, preferred: ["en-GB"]), .en)
-        XCTAssertEqual(AppLanguage.resolve(.automatic, preferred: ["th-TH", "ja-JP"]), .en)
-        XCTAssertEqual(AppLanguage.resolve(.automatic, preferred: []), .en)
-        XCTAssertEqual(AppLanguage.resolve(.japanese, preferred: ["en"]), .ja)
-        XCTAssertEqual(AppLanguage.resolve(.english, preferred: ["ja"]), .en)
+        let auto = LanguageSetting.automatic
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ja-JP", "en-US"]), .ja)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["en-GB"]), .en)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["th-TH", "ja-JP"]), .th)
+        // The first supported preference wins; unsupported ones are skipped.
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-ES", "de-DE", "ja-JP"]), .de)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-ES", "pt-BR"]), .en)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: []), .en)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["fr-CA"]), .fr)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ko-KR"]), .ko)
+        // Chinese: explicit script first, then region.
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hant-HK"]), .zhHant)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hans-TW"]), .zhHans)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-TW"]), .zhHant)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-MO"]), .zhHant)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-CN"]), .zhHans)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh"]), .zhHans)
+        XCTAssertEqual(AppLanguage.resolve(.fixed(.ja), preferred: ["en"]), .ja)
+    }
+
+    func testSettingStorageAndMigration() {
+        XCTAssertEqual(LanguageSetting(storedValue: "japanese"), .fixed(.ja)) // 0.1.x value
+        XCTAssertEqual(LanguageSetting(storedValue: "english"), .fixed(.en))
+        XCTAssertEqual(LanguageSetting(storedValue: "automatic"), .automatic)
+        XCTAssertEqual(LanguageSetting(storedValue: "zh-hant"), .fixed(.zhHant))
+        XCTAssertNil(LanguageSetting(storedValue: "es"))
+        for s in LanguageSetting.allCases { XCTAssertEqual(LanguageSetting(storedValue: s.storedValue), s) }
+        XCTAssertEqual(LanguageSetting.allCases.count, 9)
+        XCTAssertEqual(AppLanguage.allCases.map(\.rawValue), ["en", "ja", "zh-hant", "zh-hans", "ko", "fr", "de", "th"])
+    }
+
+    func testEveryLanguageHasDistinctLocalizedText() {
+        // Each language returns its own text (no silent English fallback) and fills placeholders.
+        var titles = Set<String>()
+        for lang in AppLanguage.allCases {
+            let s = Strings(lang)
+            titles.insert(s.settings + s.language + s.refresh)
+            let line = s.resetLine("X", remaining: "Y")
+            XCTAssertTrue(line.contains("X") && line.contains("Y") && !line.contains("%"), "\(lang)")
+            XCTAssertTrue(s.updateAvailable("9.9").contains("9.9"), "\(lang)")
+            XCTAssertTrue(s.linkMessage(existing: "cmd", settingsPath: "P").contains("cmd"), "\(lang)")
+            XCTAssertFalse(TimeText(lang).duration(444_000).isEmpty)
+        }
+        XCTAssertEqual(titles.count, AppLanguage.allCases.count)
     }
 
     func testLocalTimeFormatting() {
@@ -216,6 +254,8 @@ final class LocalizationTests: XCTestCase {
         let later = ISO8601DateFormatter().date(from: "2026-11-23T00:00:00Z")! // 11/23 09:00 JST
         XCTAssertEqual(TimeText(.ja, timeZone: tz).reset(sameDay, now: now), "18:40")
         XCTAssertEqual(TimeText(.ja, timeZone: tz).reset(later, now: now), "11月23日 9:00")
+        XCTAssertEqual(TimeText(.ko).duration(5 * 3600 + 3 * 60), "5시간 3분")
+        XCTAssertEqual(TimeText(.zhHans).duration(TimeInterval(2 * 86_400)), "2天")
         XCTAssertEqual(TimeText(.ja).duration(2 * 3600 + 15 * 60), "2時間15分")
         XCTAssertEqual(TimeText(.en).duration(2 * 3600 + 15 * 60), "2h 15m")
         // 7-day windows show days and hours.
