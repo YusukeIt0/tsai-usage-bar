@@ -71,7 +71,8 @@ curl -fsSL https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/main/insta
 
 ## Privacy
 
-- No servers, analytics, or network calls of its own. Codex and Claude Code talk to their own services.
+- No servers or analytics. Its only network call is an update check against this repository's GitHub Releases about once a day, with a generic `TSAI-UsageBar/<version>` User-Agent. Codex and Claude Code talk to their own services.
+- When a newer version exists, the popover and Settings show **Update**, which runs the installer from that release's tag (settings are kept).
 - Stored locally: limit percentages and reset times in `~/Library/Application Support/TSAI UsageBar/`, and your preferences.
 - Never stored or logged: tokens, credentials, prompts, conversations, transcript paths, or session IDs.
 - Credentials stay with the Codex CLI and Claude Code. The app doesn't read the Keychain or call private endpoints.
@@ -97,7 +98,8 @@ Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application ident
 - **インストール・更新:** 上記の `curl … | sh`（sudo不要、`~/Applications` に導入、設定は保持）。現在のビルドはApple公証前です。
 - **Codex:** Codex CLIにサインイン済みならそのまま使えます。未サインインなら「ブラウザでCodexにサインイン」から公式の手順でサインインできます。
 - **Claude Code:** 設定の「連携する」から。`~/.claude/settings.json` をバックアップし、既存のstatusLine表示を保ったまま中継します。「連携を解除」やアンインストールで元に戻ります。
-- **プライバシー:** 独自サーバー・分析なし。保存するのは利用率・リセット時刻と設定だけです。
+- **アップデート:** 1日1回GitHub Releasesを確認し、新しい版があればポップアップと設定に「アップデート」ボタンが出ます（設定は保持）。
+- **プライバシー:** 独自サーバー・分析なし。通信は上記の更新確認だけです。保存するのは利用率・リセット時刻と設定だけです。
 
 ## License
 

@@ -6,6 +6,7 @@ struct PopoverView: View {
     let provider: Provider
     @ObservedObject var model: UsageModel
     @ObservedObject var settings: AppSettings
+    @ObservedObject var updates: UpdateChecker
     var openSettings: () -> Void
 
     private var s: Strings { settings.strings }
@@ -21,6 +22,10 @@ struct PopoverView: View {
 
             if let notice = noticeText {
                 notice
+            }
+
+            if updates.updateAvailable, let v = updates.latest {
+                UpdateRow(text: s.updateAvailable(v.description), updates: updates, strings: s)
             }
 
             Divider()
@@ -158,5 +163,31 @@ struct UsageBar: View {
         }
         .frame(height: 8)
         .accessibilityValue(fraction.map { "\(Int(($0 * 100).rounded()))%" } ?? "—")
+    }
+}
+
+/// "Version x is available [Update]" — shared by the popover and settings.
+struct UpdateRow: View {
+    let text: String
+    @ObservedObject var updates: UpdateChecker
+    let strings: Strings
+
+    var body: some View {
+        HStack {
+            Label(text, systemImage: "arrow.down.circle")
+                .font(.caption)
+            Spacer()
+            switch updates.installState {
+            case .installing:
+                Text(strings.updating).font(.caption).foregroundStyle(.secondary)
+            case .failed:
+                Button(strings.updateNow) { updates.installUpdate() }.controlSize(.small)
+            case .idle:
+                Button(strings.updateNow) { updates.installUpdate() }.controlSize(.small)
+            }
+        }
+        if updates.installState == .failed {
+            Text(strings.updateFailed).font(.caption).foregroundStyle(.orange)
+        }
     }
 }
