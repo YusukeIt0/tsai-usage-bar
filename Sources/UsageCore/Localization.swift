@@ -120,6 +120,7 @@ public struct Strings: Sendable {
         switch kind {
         case .fiveHour: return L("5 hours", "5時間", "5小時", "5小时", "5시간", "5 heures", "5 Stunden", "5 ชั่วโมง")
         case .sevenDay: return L("7 days", "7日間", "7天", "7天", "7일", "7 jours", "7 Tage", "7 วัน")
+        case .month: return L("This month", "今月", "本月", "本月", "이번 달", "Ce mois-ci", "Diesen Monat", "เดือนนี้")
         }
     }
 
@@ -235,6 +236,43 @@ public struct Strings: Sendable {
     }
     public var checkForUpdates: String { L("Check", "確認", "檢查", "检查", "확인", "Vérifier", "Prüfen", "ตรวจสอบ") }
     public var version: String { L("Version", "バージョン", "版本", "版本", "버전", "Version", "Version", "เวอร์ชัน") }
+
+    // GitHub Actions
+    public var privateFreeQuota: String {
+        L("Free usage (private repos)", "無料枠（非公開リポジトリ）", "免費額度（私人存放庫）", "免费额度（私有仓库）",
+          "무료 사용량 (비공개 저장소)", "Utilisation gratuite (dépôts privés)", "Kostenloses Kontingent (private Repos)", "โควตาฟรี (รีโพส่วนตัว)")
+    }
+    public var publicReposFree: String {
+        L("Public repositories are free with no limit", "公開リポジトリは無料・上限なし", "公開存放庫免費且無上限", "公开仓库免费且无上限",
+          "공개 저장소는 무료이며 제한 없음", "Les dépôts publics sont gratuits et illimités", "Öffentliche Repos sind kostenlos und unbegrenzt", "รีโพสาธารณะใช้ฟรีไม่จำกัด")
+    }
+    public var githubDelay: String {
+        L("GitHub's totals can lag by a few hours", "GitHubの集計は数時間遅れることがあります", "GitHub 的統計可能延遲數小時", "GitHub 的统计可能延迟数小时",
+          "GitHub 집계는 몇 시간 늦을 수 있음", "Les totaux GitHub peuvent avoir quelques heures de retard", "GitHub-Summen können einige Stunden verzögert sein", "ยอดของ GitHub อาจช้าไม่กี่ชั่วโมง")
+    }
+    public var freeQuotaUsedUp: String {
+        L("Free usage is used up", "無料枠を使い切りました", "免費額度已用完", "免费额度已用完",
+          "무료 사용량을 모두 사용함", "Utilisation gratuite épuisée", "Kostenloses Kontingent aufgebraucht", "ใช้โควตาฟรีหมดแล้ว")
+    }
+    public var githubNotConnected: String {
+        L("Not connected to GitHub", "GitHubと未連携", "尚未連結 GitHub", "尚未关联 GitHub",
+          "GitHub와 연결되지 않음", "Non relié à GitHub", "Nicht mit GitHub verbunden", "ยังไม่ได้เชื่อมต่อกับ GitHub")
+    }
+    public var connectGitHub: String {
+        L("Connect GitHub", "GitHubと連携", "連結 GitHub", "关联 GitHub", "GitHub 연결", "Relier GitHub", "Mit GitHub verbinden", "เชื่อมต่อ GitHub")
+    }
+    public func githubEnterCode(_ code: String) -> String {
+        fill(L("Enter %1 in the browser (copied)", "ブラウザで %1 を入力（コピー済み）", "請在瀏覽器輸入 %1（已複製）", "请在浏览器中输入 %1（已复制）",
+               "브라우저에 %1 입력 (복사됨)", "Saisissez %1 dans le navigateur (copié)", "%1 im Browser eingeben (kopiert)", "ป้อน %1 ในเบราว์เซอร์ (คัดลอกแล้ว)"), code)
+    }
+    public var githubUnknownPlan: String {
+        L("This plan's free usage isn't known", "このプランの無料枠が分からないため表示できません", "無法得知此方案的免費額度", "无法得知此套餐的免费额度",
+          "이 요금제의 무료 사용량을 알 수 없음", "Utilisation gratuite inconnue pour cette offre", "Kostenloses Kontingent dieses Tarifs unbekannt", "ไม่ทราบโควตาฟรีของแพ็กเกจนี้")
+    }
+    public var githubTooManyRepos: String {
+        L("Too many public repositories to check", "公開リポジトリが多すぎて確認できません", "公開存放庫過多，無法確認", "公开仓库过多，无法确认",
+          "공개 저장소가 너무 많아 확인할 수 없음", "Trop de dépôts publics à vérifier", "Zu viele öffentliche Repos zum Prüfen", "มีรีโพสาธารณะมากเกินกว่าจะตรวจสอบ")
+    }
 
     public var pausedHidden: String {
         L("Paused (hidden)", "表示OFFのため停止中", "已暫停（已隱藏）", "已暂停（已隐藏）", "일시 정지됨 (숨김)", "En pause (masqué)", "Pausiert (ausgeblendet)", "หยุดชั่วคราว (ซ่อนอยู่)")

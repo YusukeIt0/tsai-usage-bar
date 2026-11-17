@@ -153,12 +153,13 @@ final class VisibilityTests: XCTestCase {
     }
 
     func testProvidersWithAllItemsOffArePaused() {
-        let both: Set<Provider> = [.claude, .codex]
-        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.claude, .fiveHour)], initialized: both), [.claude])
+        let all = Set(Provider.allCases)
+        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.claude, .fiveHour)], initialized: all), [.claude])
         XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.codex, .sevenDay), ItemID(.claude, .sevenDay)],
-                                                      initialized: both), both)
+                                                      initialized: all), [.claude, .codex])
+        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.github, .month)], initialized: all), [.github])
         // Not reported yet: keep active so available windows can be learned.
-        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.claude, .fiveHour)], initialized: [.claude]), both)
+        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.claude, .fiveHour)], initialized: [.claude]), all)
     }
 
     func testUnknownProviderStateDoesNotHide() {
@@ -372,5 +373,58 @@ final class UpdateTests: XCTestCase {
         XCTAssertFalse(ReleaseInfo.isUpdate(latest: AppVersion("0.1.4"), current: nil)) // dev build
         XCTAssertEqual(ReleaseInfo.installerURL(for: AppVersion("0.1.4")!).absoluteString,
                        "https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/v0.1.4/install.sh")
+    }
+}
+
+final class GitHubActionsUsageTests: XCTestCase {
+    typealias Item = GitHubActionsUsage.Item
+
+    func summary(_ items: [(String, Double)]) -> Data {
+        let arr = items.map { ["product": "Actions", "sku": $0.0, "grossAmount": $0.1] as [String: Any] }
+        return try! JSONSerialization.data(withJSONObject: ["usageItems": arr])
+    }
+
+    func testPrivateUsageIsTotalMinusPublicRepositories() throws {
+        // Real November 2026 shape: two public repositories and one private one.
+        let total = try GitHubActionsUsage.items(fromSummaryJSON: summary([
+            ("actions_linux", 56.262), ("actions_macos", 56.234), ("actions_storage", 0.0039)]))
+        let dotLink = try GitHubActionsUsage.items(fromSummaryJSON: summary([
+            ("actions_linux", 34.812), ("actions_macos", 55.18), ("actions_storage", 0.0018)]))
+        let tsai = try GitHubActionsUsage.items(fromSummaryJSON: summary([("actions_macos", 1.054)]))
+        XCTAssertEqual(total.count, 2) // storage is a separate allowance
+        let now = ISO8601DateFormatter().date(from: "2026-11-18T03:00:00Z")!
+        let w = try GitHubActionsUsage.window(plan: "pro", total: total, publicRepos: [dotLink, tsai], now: now)
+        XCTAssertEqual(w.usedPercent, 100) // 21.45 of 18 USD: used up, never above 100
+        XCTAssertEqual(w.resetsAt, ISO8601DateFormatter().date(from: "2026-12-01T00:00:00Z"))
+    }
+
+    func testPartialUseAndPlans() throws {
+        let total = [Item(sku: "actions_linux", grossAmount: 6)]
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertEqual(try GitHubActionsUsage.window(plan: "pro", total: total, publicRepos: [], now: now).usedPercent, 100.0 / 3, accuracy: 0.001)
+        XCTAssertEqual(try GitHubActionsUsage.window(plan: "free", total: total, publicRepos: [], now: now).usedPercent, 50)
+        XCTAssertEqual(try GitHubActionsUsage.window(plan: "pro", total: [], publicRepos: [], now: now).usedPercent, 0)
+        // Unknown plans are not guessed.
+        XCTAssertThrowsError(try GitHubActionsUsage.window(plan: "business", total: total, publicRepos: [], now: now))
+        XCTAssertThrowsError(try GitHubActionsUsage.window(plan: nil, total: total, publicRepos: [], now: now))
+    }
+
+    func testOnlyActionsComputeCounts() throws {
+        let data = try! JSONSerialization.data(withJSONObject: ["usageItems": [
+            ["product": "Actions", "sku": "actions_windows", "grossAmount": 1.5],
+            ["product": "Packages", "sku": "packages_storage", "grossAmount": 9.0],
+            ["product": "Actions", "sku": "actions_storage", "grossAmount": 3.0]]])
+        XCTAssertEqual(try GitHubActionsUsage.items(fromSummaryJSON: data), [Item(sku: "actions_windows", grossAmount: 1.5)])
+        XCTAssertThrowsError(try GitHubActionsUsage.items(fromSummaryJSON: Data("{}".utf8)))
+    }
+
+    func testMonthWindowAndItems() {
+        XCTAssertEqual(Provider.github.windows, [.month])
+        XCTAssertTrue(ItemID.allCases.contains(ItemID(.github, .month)))
+        XCTAssertFalse(ItemID.allCases.contains(ItemID(.github, .fiveHour)))
+        XCTAssertNil(WindowKind.month.minutes) // never matched to a Codex duration
+        let snap = ProviderSnapshot(windows: [.month: UsageWindow(usedPercent: 1, resetsAt: nil)], fetchedAt: Date())
+        XCTAssertEqual(ItemVisibility.defaultItem(for: .github, snapshot: snap), ItemID(.github, .month))
+        XCTAssertEqual(WindowDisplay.value(usedPercent: 25, resetsAt: nil).label(.month, mode: .remaining), "M75%")
     }
 }

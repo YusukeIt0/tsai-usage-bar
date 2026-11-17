@@ -47,6 +47,7 @@ struct SettingsView: View {
             Section(s.connections) {
                 codexRow
                 claudeRow
+                githubRow
                 if let linkError {
                     Text(linkError).font(.caption).foregroundStyle(.red)
                 }
@@ -160,6 +161,28 @@ struct SettingsView: View {
                 Text(s.claudeNotInstalled).font(.caption).foregroundStyle(.secondary)
             default:
                 EmptyView()
+            }
+        }
+    }
+
+    private var githubRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("GitHub Actions")
+                Spacer()
+                if model.githubDeviceCode != nil {
+                    Button(s.cancel) { model.cancelGitHubConnect() }
+                } else if let login = model.githubLogin {
+                    Text(model.isActive(.github) ? "\(s.connected) (\(login))" : s.pausedHidden).foregroundStyle(.secondary)
+                    Button(s.disconnect) { model.disconnectGitHub() }
+                } else {
+                    Button(s.connectGitHub) { model.connectGitHub() }
+                }
+            }
+            if let code = model.githubDeviceCode {
+                Text(s.githubEnterCode(code)).font(.caption.monospaced()).textSelection(.enabled)
+            } else if model.githubConnectError != nil {
+                Text(s.linkFailed).font(.caption).foregroundStyle(.orange)
             }
         }
     }

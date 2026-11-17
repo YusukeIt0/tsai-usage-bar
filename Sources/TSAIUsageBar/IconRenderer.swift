@@ -37,9 +37,15 @@ enum IconRenderer {
 
     static func render(provider: Provider, label: String, fill: Int?) -> NSImage {
         let text = textSize(label)
-        let shape: (CGFloat) -> (NSBezierPath, CGRect) = provider == .claude ? claudeShape : codexShape
+        let shape: (CGFloat) -> (NSBezierPath, CGRect)
+        let padding: CGFloat
+        switch provider {
+        case .claude: shape = claudeShape; padding = 13
+        case .codex: shape = codexShape; padding = 12
+        case .github: shape = githubShape; padding = 10
+        }
         // Size the silhouette to the label; "H100%" must fit without clipping.
-        let width = ceil(provider == .claude ? text.width + 13 : text.width + 12)
+        let width = ceil(text.width + padding)
         let (path, textBox) = shape(width)
         let fraction = CGFloat(min(100, max(0, fill ?? 0))) / 100
         let img = NSImage(size: NSSize(width: width, height: height), flipped: true) { _ in
@@ -94,6 +100,30 @@ enum IconRenderer {
         }
         let textBox = CGRect(x: bodyX, y: bodyTop, width: bodyW, height: bodyBottom - bodyTop)
         return (path, textBox)
+    }
+
+    /// Cat head (Octocat-like silhouette): a rounded face with two pointed ears.
+    static func githubShape(_ w: CGFloat) -> (NSBezierPath, CGRect) {
+        let path = NSBezierPath()
+        let faceTop: CGFloat = 4
+        path.append(NSBezierPath(roundedRect: CGRect(x: 0, y: faceTop, width: w, height: 18 - faceTop - 0.5),
+                                 xRadius: 6, yRadius: 6))
+        // Ears rise from the upper corners and lean slightly outward.
+        let left = NSBezierPath()
+        left.move(to: CGPoint(x: 1.2, y: faceTop + 4))
+        left.line(to: CGPoint(x: 2.2, y: 0.3))
+        left.line(to: CGPoint(x: 8.5, y: faceTop + 0.5))
+        left.close()
+        let right = NSBezierPath()
+        // Same winding as the left ear (mirroring reverses it), so the union stays solid.
+        right.move(to: CGPoint(x: w - 1.2, y: faceTop + 4))
+        right.line(to: CGPoint(x: w - 8.5, y: faceTop + 0.5))
+        right.line(to: CGPoint(x: w - 2.2, y: 0.3))
+        right.close()
+        path.append(left)
+        path.append(right)
+        path.windingRule = .nonZero
+        return (path, CGRect(x: 0, y: faceTop + 0.5, width: w, height: 18 - faceTop - 1))
     }
 
     /// Cloud: a wide rounded base with two bumps on top.

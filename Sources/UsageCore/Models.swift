@@ -3,11 +3,21 @@ import Foundation
 public enum Provider: String, Codable, CaseIterable, Sendable {
     case claude
     case codex
+    case github
 
     public var displayName: String {
         switch self {
         case .claude: return "Claude Code"
         case .codex: return "Codex"
+        case .github: return "GitHub Actions"
+        }
+    }
+
+    /// Windows this provider can report, in display order.
+    public var windows: [WindowKind] {
+        switch self {
+        case .claude, .codex: return [.fiveHour, .sevenDay]
+        case .github: return [.month]
         }
     }
 }
@@ -16,20 +26,24 @@ public enum Provider: String, Codable, CaseIterable, Sendable {
 public enum WindowKind: String, Codable, CodingKeyRepresentable, CaseIterable, Sendable {
     case fiveHour
     case sevenDay
+    /// Calendar month (GitHub's included Actions usage for private repositories).
+    case month
 
     /// Letter shown in the menu bar.
     public var letter: String {
         switch self {
         case .fiveHour: return "H"
         case .sevenDay: return "W"
+        case .month: return "M"
         }
     }
 
-    /// Official window length in minutes.
-    public var minutes: Int {
+    /// Official window length in minutes; nil when it is not a fixed length.
+    public var minutes: Int? {
         switch self {
         case .fiveHour: return 300
         case .sevenDay: return 10080
+        case .month: return nil
         }
     }
 }
@@ -44,10 +58,7 @@ public struct ItemID: Hashable, Codable, CaseIterable, Sendable {
         self.window = window
     }
 
-    public static let allCases: [ItemID] = [
-        ItemID(.claude, .fiveHour), ItemID(.claude, .sevenDay),
-        ItemID(.codex, .fiveHour), ItemID(.codex, .sevenDay),
-    ]
+    public static let allCases: [ItemID] = Provider.allCases.flatMap { p in p.windows.map { ItemID(p, $0) } }
 
     public var key: String { "\(provider.rawValue).\(window.rawValue)" }
 }

@@ -6,7 +6,7 @@ import UsageCore
 @MainActor
 enum IconPreview {
     static func run(outputDir: String) {
-        let labels: [(String, Int?)] = [("H100%", 100), ("H75%", 75), ("W42%", 42), ("H18%", 18), ("W5%", 5), ("H0%", 0), ("H—", nil)]
+        let labels: [(String, Int?)] = [("H100%", 100), ("H75%", 75), ("W42%", 42), ("M18%", 18), ("W5%", 5), ("M0%", 0), ("M—", nil)]
         for (name, bg, fg) in [("light", NSColor(white: 0.93, alpha: 1), NSColor.black),
                                ("dark", NSColor(white: 0.17, alpha: 1), NSColor.white)] {
             let rows = Provider.allCases.map { p in labels.map { IconRenderer.image(provider: p, label: $0.0, fill: $0.1) } }

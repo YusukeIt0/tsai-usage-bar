@@ -28,6 +28,16 @@ final class UsageModel: ObservableObject {
     @Published private(set) var claudeLink: ClaudeLinkState = .notLinked
     @Published private(set) var claudeAuth: ClaudeAuth.Status = .unknown
     @Published private(set) var codexSigningIn = false
+    @Published private(set) var github = ProviderStatus()
+    @Published private(set) var githubError: GitHubError?
+    @Published private(set) var githubLogin: String? = GitHubAuth.load()?.login
+    /// Shown while connecting: the code the person enters in the browser.
+    @Published private(set) var githubDeviceCode: String?
+    @Published private(set) var githubConnectError: GitHubAuth.AuthError?
+    private var githubTimer: Timer?
+    private var githubConnectTask: Task<Void, Never>?
+    /// Billing data lags by hours, so an hourly read is enough.
+    private let githubInterval: TimeInterval = 3600
     /// Advances at reset times (and every 30 s while a popover is open) so derived text updates.
     @Published private(set) var now = Date()
     /// Providers with at least one item turned on. Others are not updated at all.
@@ -47,6 +57,7 @@ final class UsageModel: ObservableObject {
     init() {
         claude.snapshot = SnapshotStore.load(paths.snapshotURL(.claude))
         codex.snapshot = SnapshotStore.load(paths.snapshotURL(.codex))
+        github.snapshot = SnapshotStore.load(paths.snapshotURL(.github))
     }
 
     func start() {
@@ -55,6 +66,7 @@ final class UsageModel: ObservableObject {
         observeClaudeUpdates()
         observeSystem()
         refreshCodex(force: true)
+        refreshGitHub(force: false)
         scheduleTick()
     }
 
@@ -76,18 +88,35 @@ final class UsageModel: ObservableObject {
         } else {
             codexTimer?.invalidate()
         }
+        if active.contains(.github) {
+            if !old.contains(.github) { refreshGitHub(force: true) }
+        } else {
+            githubTimer?.invalidate()
+        }
     }
 
     func isActive(_ p: Provider) -> Bool { activeProviders.contains(p) }
 
-    func status(_ p: Provider) -> ProviderStatus { p == .claude ? claude : codex }
+    func status(_ p: Provider) -> ProviderStatus {
+        switch p {
+        case .claude: return claude
+        case .codex: return codex
+        case .github: return github
+        }
+    }
 
     func display(_ id: ItemID) -> WindowDisplay {
         WindowDisplay.evaluate(status(id.provider).snapshot, id.window, now: now)
     }
 
     /// True when the last Codex attempt failed and the shown values are older.
-    func isStale(_ p: Provider) -> Bool { p == .codex && codex.lastError != nil && codex.snapshot != nil }
+    func isStale(_ p: Provider) -> Bool {
+        switch p {
+        case .codex: return codex.lastError != nil && codex.snapshot != nil
+        case .github: return githubError != nil && github.snapshot != nil
+        case .claude: return false
+        }
+    }
 
     // MARK: Popover
 
@@ -106,6 +135,9 @@ final class UsageModel: ObservableObject {
             reloadClaude()
             refreshClaudeLink()
             if claude.snapshot == nil { Task { await refreshClaudeAuth() } }
+        case .github:
+            let last = github.lastAttempt ?? .distantPast
+            if Date().timeIntervalSince(last) > 600 { refreshGitHub(force: true) }
         }
         scheduleTick()
     }
@@ -118,6 +150,7 @@ final class UsageModel: ObservableObject {
 
     func manualRefresh(_ provider: Provider?) {
         if provider == nil || provider == .codex { refreshCodex(force: true) }
+        if provider == nil || provider == .github { refreshGitHub(force: true) }
         if provider == nil || provider == .claude {
             reloadClaude()
             refreshClaudeLink()
@@ -194,6 +227,102 @@ final class UsageModel: ObservableObject {
         }
     }
 
+    // MARK: GitHub Actions
+
+    var githubConnected: Bool { githubLogin != nil || GitHubAuth.load() != nil }
+
+    func refreshGitHub(force: Bool) {
+        guard isActive(.github), !github.isFetching, !sleeping else { return }
+        guard GitHubAuth.load() != nil else {
+            githubError = .notConnected
+            return
+        }
+        if !force, let last = github.lastAttempt, Date().timeIntervalSince(last) < githubInterval {
+            scheduleGitHub()
+            return
+        }
+        github.isFetching = true
+        github.lastAttempt = Date()
+        githubTimer?.invalidate()
+        Task {
+            let result = await GitHubClient.readUsage()
+            self.github.isFetching = false
+            switch result {
+            case .success(let snap):
+                self.github.snapshot = snap
+                self.githubError = nil
+                self.github.consecutiveFailures = 0
+                try? self.paths.ensureDirectory()
+                try? SnapshotStore.save(snap, to: self.paths.snapshotURL(.github))
+                self.onSnapshotArrived?(.github, snap)
+            case .failure(let e):
+                self.githubError = e
+                self.github.consecutiveFailures += 1
+                if e == .notConnected { self.githubLogin = nil }
+            }
+            self.now = Date()
+            self.scheduleGitHub()
+            self.scheduleTick()
+        }
+    }
+
+    private func scheduleGitHub() {
+        githubTimer?.invalidate()
+        guard !sleeping, isActive(.github), GitHubAuth.load() != nil else { return }
+        let backoff = min(4, max(1, Double(github.consecutiveFailures)))
+        let t = Timer(timeInterval: githubInterval * backoff, repeats: false) { [weak self] _ in
+            Task { @MainActor in self?.refreshGitHub(force: true) }
+        }
+        t.tolerance = 300
+        RunLoop.main.add(t, forMode: .common)
+        githubTimer = t
+    }
+
+    /// Device flow: copies the code, opens the browser, waits for approval.
+    func connectGitHub() {
+        guard githubConnectTask == nil else { return }
+        githubConnectError = nil
+        githubConnectTask = Task {
+            defer {
+                self.githubDeviceCode = nil
+                self.githubConnectTask = nil
+            }
+            do {
+                let code = try await GitHubAuth.startDeviceFlow()
+                self.githubDeviceCode = code.userCode
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(code.userCode, forType: .string)
+                NSWorkspace.shared.open(code.verificationURL)
+                let tokens = try await GitHubAuth.waitForApproval(code)
+                self.githubLogin = tokens.login
+                self.githubError = nil
+                self.refreshGitHub(force: true)
+            } catch is CancellationError {
+                return
+            } catch let e as GitHubAuth.AuthError {
+                self.githubConnectError = e
+            } catch {
+                self.githubConnectError = .network
+            }
+        }
+    }
+
+    func cancelGitHubConnect() {
+        githubConnectTask?.cancel()
+        githubConnectTask = nil
+        githubDeviceCode = nil
+    }
+
+    /// Forgets the token on this Mac. The authorization itself can be revoked on GitHub.
+    func disconnectGitHub() {
+        GitHubAuth.remove()
+        githubTimer?.invalidate()
+        githubLogin = nil
+        github = ProviderStatus()
+        githubError = .notConnected
+        try? FileManager.default.removeItem(at: paths.snapshotURL(.github))
+    }
+
     // MARK: Claude
 
     private func observeClaudeUpdates() {
@@ -249,7 +378,7 @@ final class UsageModel: ObservableObject {
         guard !sleeping else { return }
         let current = Date()
         var next: TimeInterval = .infinity
-        for s in [claude.snapshot, codex.snapshot] {
+        for s in [claude.snapshot, codex.snapshot, github.snapshot] {
             for w in s?.windows.values ?? [:].values {
                 if let r = w.resetsAt, r > current { next = min(next, r.timeIntervalSince(current) + 0.5) }
             }
@@ -287,7 +416,10 @@ final class UsageModel: ObservableObject {
                 self.scheduleTick()
                 // Give the network a moment to come back before asking Codex.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                    MainActor.assumeIsolated { self.refreshCodex(force: true) }
+                    MainActor.assumeIsolated {
+                        self.refreshCodex(force: true)
+                        self.refreshGitHub(force: false)
+                    }
                 }
             }
         })
