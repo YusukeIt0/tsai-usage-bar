@@ -1,0 +1,161 @@
+import SwiftUI
+import UsageCore
+
+/// Small panel for one provider: both windows as bars, reset times, and status.
+struct PopoverView: View {
+    let provider: Provider
+    @ObservedObject var model: UsageModel
+    @ObservedObject var settings: AppSettings
+    var openSettings: () -> Void
+
+    private var s: Strings { settings.strings }
+    private var status: ProviderStatus { model.status(provider) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(provider.displayName).font(.headline)
+
+            ForEach(WindowKind.allCases, id: \.self) { kind in
+                windowRow(kind)
+            }
+
+            if let notice = noticeText {
+                notice
+            }
+
+            Divider()
+            footer
+        }
+        .padding(14)
+        .frame(width: 280)
+    }
+
+    // MARK: Rows
+
+    @ViewBuilder
+    private func windowRow(_ kind: WindowKind) -> some View {
+        let display = model.display(ItemID(provider, kind))
+        let offered = status.snapshot?.offers(kind) ?? true
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(s.windowTitle(kind)).font(.subheadline.weight(.semibold))
+                Spacer()
+                if let p = display.percent(mode: settings.displayMode) {
+                    Text("\(p)%").font(.subheadline.monospacedDigit().weight(.semibold))
+                } else {
+                    Text("—").foregroundStyle(.secondary)
+                }
+            }
+            UsageBar(fraction: display.percent(mode: settings.displayMode).map { Double($0) / 100 })
+                .opacity(model.isStale(provider) ? 0.5 : 1)
+            Group {
+                switch display {
+                case .value(_, let reset):
+                    if let reset { Text(resetText(reset)) } else { EmptyView() }
+                case .awaitingUpdateAfterReset:
+                    Text(s.awaitingAfterReset)
+                case .unavailable:
+                    Text(offered ? s.unavailable : s.notOffered)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Remaining time is added only within a day, as in "18:40 (in 2h 15m)".
+    private func resetText(_ date: Date) -> String {
+        let tt = TimeText(settings.appLanguage)
+        let remaining = date.timeIntervalSince(model.now)
+        return s.resetLine(tt.reset(date, now: model.now),
+                           remaining: remaining < 86_400 ? tt.duration(remaining) : nil)
+    }
+
+    // MARK: Notices
+
+    private var noticeText: AnyView? {
+        switch provider {
+        case .codex:
+            guard let e = status.lastError else { return nil }
+            let message: String
+            switch e {
+            case .notFound: message = s.codexNotFound
+            case .notSignedIn: message = s.codexNotSignedIn
+            case .timedOut: message = s.fetchTimedOut
+            case .failed: message = s.fetchFailed
+            }
+            return AnyView(VStack(alignment: .leading, spacing: 6) {
+                Label(status.snapshot != nil ? "\(message) · \(s.showingLastValues)" : message,
+                      systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                if e == .notSignedIn {
+                    Button(model.codexSigningIn ? s.refreshing : s.signInCodex) { model.signInCodex() }
+                        .disabled(model.codexSigningIn)
+                        .controlSize(.small)
+                }
+            })
+        case .claude:
+            if model.claudeLink != .linked {
+                return AnyView(VStack(alignment: .leading, spacing: 6) {
+                    Label(s.claudeNotLinked, systemImage: "link").font(.caption).foregroundStyle(.secondary)
+                    Button(s.connect) { openSettings() }.controlSize(.small)
+                })
+            }
+            if model.claudeAuth == .signedOut {
+                return AnyView(VStack(alignment: .leading, spacing: 6) {
+                    Label(s.claudeNotSignedIn, systemImage: "person.crop.circle.badge.exclamationmark")
+                        .font(.caption).foregroundStyle(.orange)
+                    Button(s.signInClaude) { ClaudeAuth.startLogin() }.controlSize(.small)
+                })
+            }
+            if status.snapshot == nil {
+                return AnyView(Text(s.claudeWaiting).font(.caption).foregroundStyle(.secondary))
+            }
+            return nil
+        }
+    }
+
+    // MARK: Footer
+
+    private var footer: some View {
+        HStack {
+            if status.isFetching {
+                Text(s.refreshing).font(.caption).foregroundStyle(.secondary)
+            } else {
+                Text(s.lastUpdated(status.snapshot.map {
+                    TimeText(settings.appLanguage).clock($0.fetchedAt, now: model.now)
+                } ?? s.never))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button { model.manualRefresh(provider) } label: { Image(systemName: "arrow.clockwise") }
+                .buttonStyle(.borderless)
+                .help(s.refresh)
+                .disabled(status.isFetching)
+            Button { openSettings() } label: { Image(systemName: "gearshape") }
+                .buttonStyle(.borderless)
+                .help(s.settings)
+        }
+    }
+}
+
+/// Horizontal bar. Nil shows an empty track (no guessed value).
+struct UsageBar: View {
+    let fraction: Double?
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.primary.opacity(0.12))
+                if let fraction {
+                    Capsule().fill(Color.primary.opacity(0.75))
+                        .frame(width: max(fraction > 0 ? 4 : 0, geo.size.width * min(1, max(0, fraction))))
+                }
+            }
+        }
+        .frame(height: 8)
+        .accessibilityValue(fraction.map { "\(Int(($0 * 100).rounded()))%" } ?? "—")
+    }
+}

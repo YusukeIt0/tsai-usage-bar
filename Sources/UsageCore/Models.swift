@@ -1,0 +1,96 @@
+import Foundation
+
+public enum Provider: String, Codable, CaseIterable, Sendable {
+    case claude
+    case codex
+
+    public var displayName: String {
+        switch self {
+        case .claude: return "Claude Code"
+        case .codex: return "Codex"
+        }
+    }
+}
+
+/// The two usage windows the app shows. Values are never moved between kinds.
+public enum WindowKind: String, Codable, CodingKeyRepresentable, CaseIterable, Sendable {
+    case fiveHour
+    case sevenDay
+
+    /// Letter shown in the menu bar.
+    public var letter: String {
+        switch self {
+        case .fiveHour: return "H"
+        case .sevenDay: return "W"
+        }
+    }
+
+    /// Official window length in minutes.
+    public var minutes: Int {
+        switch self {
+        case .fiveHour: return 300
+        case .sevenDay: return 10080
+        }
+    }
+}
+
+/// One menu bar item: a provider plus a window.
+public struct ItemID: Hashable, Codable, CaseIterable, Sendable {
+    public let provider: Provider
+    public let window: WindowKind
+
+    public init(_ provider: Provider, _ window: WindowKind) {
+        self.provider = provider
+        self.window = window
+    }
+
+    public static let allCases: [ItemID] = [
+        ItemID(.claude, .fiveHour), ItemID(.claude, .sevenDay),
+        ItemID(.codex, .fiveHour), ItemID(.codex, .sevenDay),
+    ]
+
+    public var key: String { "\(provider.rawValue).\(window.rawValue)" }
+}
+
+public struct UsageWindow: Codable, Equatable, Sendable {
+    /// 0...100, as reported by the service.
+    public var usedPercent: Double
+    public var resetsAt: Date?
+    /// When this window's value was received. Nil means the snapshot's `fetchedAt`.
+    public var observedAt: Date?
+
+    public init(usedPercent: Double, resetsAt: Date?, observedAt: Date? = nil) {
+        self.usedPercent = usedPercent
+        self.resetsAt = resetsAt
+        self.observedAt = observedAt
+    }
+}
+
+/// Last successfully received values for one provider.
+public struct ProviderSnapshot: Codable, Equatable, Sendable {
+    public var windows: [WindowKind: UsageWindow]
+    /// When the values were received from the official source.
+    public var fetchedAt: Date
+    /// Windows included in the latest official reply. A window missing here is not offered
+    /// for this account or plan (for example, plans without a 5-hour limit).
+    public var reportedKinds: [WindowKind]?
+
+    public init(windows: [WindowKind: UsageWindow], fetchedAt: Date, reportedKinds: [WindowKind]? = nil) {
+        self.windows = windows
+        self.fetchedAt = fetchedAt
+        self.reportedKinds = reportedKinds ?? WindowKind.allCases.filter { windows[$0] != nil }
+    }
+
+    /// False only when the latest official reply is known and lacks this window.
+    public func offers(_ kind: WindowKind) -> Bool {
+        guard let reportedKinds else { return true }
+        return reportedKinds.contains(kind)
+    }
+
+    public subscript(kind: WindowKind) -> UsageWindow? { windows[kind] }
+}
+
+public enum DisplayMode: String, Codable, CaseIterable, Sendable {
+    case remaining
+    case used
+}
