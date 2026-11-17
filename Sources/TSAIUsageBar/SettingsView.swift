@@ -60,7 +60,7 @@ struct SettingsView: View {
                         Text("\(s.version) \(AppInfo.version)")
                         Spacer()
                         if updates.checking {
-                            Text(s.refreshing).foregroundStyle(.secondary)
+                            Text(s.checkingForUpdates).foregroundStyle(.secondary)
                         } else {
                             if updates.lastChecked != nil, !updates.checkFailed {
                                 Text(s.upToDate).foregroundStyle(.secondary)
@@ -73,7 +73,6 @@ struct SettingsView: View {
 
             Section {
                 HStack {
-                    Button(s.refresh) { model.manualRefresh(nil) }
                     Spacer()
                     Button(s.quit) { NSApp.terminate(nil) }
                 }
@@ -121,7 +120,7 @@ struct SettingsView: View {
             case .some(.notFound):
                 Text(s.codexNotFound).foregroundStyle(.secondary)
             case .some(.notSignedIn):
-                Button(model.codexSigningIn ? s.refreshing : s.signInCodex) { model.signInCodex() }
+                Button(model.codexSigningIn ? s.signingIn : s.signInCodex) { model.signInCodex() }
                     .disabled(model.codexSigningIn)
             case .some:
                 Text(s.fetchFailed).foregroundStyle(.orange)

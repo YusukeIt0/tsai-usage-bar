@@ -227,6 +227,12 @@ public struct Strings: Sendable {
         L("Update failed", "アップデートできませんでした", "更新失敗", "更新失败", "업데이트 실패", "Échec de la mise à jour", "Aktualisierung fehlgeschlagen", "อัปเดตไม่สำเร็จ")
     }
     public var upToDate: String { L("Up to date", "最新です", "已是最新版本", "已是最新版本", "최신 버전", "À jour", "Aktuell", "เป็นเวอร์ชันล่าสุด") }
+    public var checkingForUpdates: String {
+        L("Checking…", "確認中…", "正在檢查…", "正在检查…", "확인 중…", "Vérification…", "Wird geprüft…", "กำลังตรวจสอบ…")
+    }
+    public var signingIn: String {
+        L("Signing in…", "サインイン中…", "正在登入…", "正在登录…", "로그인 중…", "Connexion…", "Anmeldung läuft…", "กำลังลงชื่อเข้าใช้…")
+    }
     public var checkForUpdates: String { L("Check", "確認", "檢查", "检查", "확인", "Vérifier", "Prüfen", "ตรวจสอบ") }
     public var version: String { L("Version", "バージョン", "版本", "版本", "버전", "Version", "Version", "เวอร์ชัน") }
 

@@ -96,7 +96,7 @@ struct PopoverView: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
                 if e == .notSignedIn {
-                    Button(model.codexSigningIn ? s.refreshing : s.signInCodex) { model.signInCodex() }
+                    Button(model.codexSigningIn ? s.signingIn : s.signInCodex) { model.signInCodex() }
                         .disabled(model.codexSigningIn)
                         .controlSize(.small)
                 }
