@@ -63,12 +63,13 @@ struct PopoverView: View {
         }
     }
 
-    /// Remaining time is added only within a day, as in "18:40 (in 2h 15m)".
+    /// Reset time plus remaining time for both windows, e.g. "18:40 (in 2h 15m)" or
+    /// "Nov 23, 9:00 (in 5d 3h)".
     private func resetText(_ date: Date) -> String {
         let tt = TimeText(settings.appLanguage)
         let remaining = date.timeIntervalSince(model.now)
         return s.resetLine(tt.reset(date, now: model.now),
-                           remaining: remaining < 86_400 ? tt.duration(remaining) : nil)
+                           remaining: tt.duration(remaining))
     }
 
     // MARK: Notices

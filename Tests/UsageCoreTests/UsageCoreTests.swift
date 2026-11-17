@@ -218,6 +218,12 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(TimeText(.ja, timeZone: tz).reset(later, now: now), "11月23日 9:00")
         XCTAssertEqual(TimeText(.ja).duration(2 * 3600 + 15 * 60), "2時間15分")
         XCTAssertEqual(TimeText(.en).duration(2 * 3600 + 15 * 60), "2h 15m")
+        // 7-day windows show days and hours.
+        let fiveDays: TimeInterval = 444_000 // 5 days, 3 hours, 20 minutes
+        XCTAssertEqual(TimeText(.ja).duration(fiveDays), "5日3時間")
+        XCTAssertEqual(TimeText(.en).duration(fiveDays), "5d 3h")
+        XCTAssertEqual(TimeText(.ja).duration(TimeInterval(6 * 86_400)), "6日")
+        XCTAssertEqual(Strings(.ja).resetLine("11月23日 9:00", remaining: "5日3時間"), "リセット：11月23日 9:00（あと5日3時間）")
         XCTAssertEqual(Strings(.ja).resetLine("18:40", remaining: "2時間15分"), "リセット：18:40（あと2時間15分）")
     }
 }
