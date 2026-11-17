@@ -6,10 +6,10 @@ import UsageCore
 @MainActor
 enum IconPreview {
     static func run(outputDir: String) {
-        let labels = ["H42%", "W68%", "H100%", "W100%", "H0%", "H—", "W—"]
+        let labels: [(String, Int?)] = [("H100%", 100), ("H75%", 75), ("W42%", 42), ("H18%", 18), ("W5%", 5), ("H0%", 0), ("H—", nil)]
         for (name, bg, fg) in [("light", NSColor(white: 0.93, alpha: 1), NSColor.black),
                                ("dark", NSColor(white: 0.17, alpha: 1), NSColor.white)] {
-            let rows = Provider.allCases.map { p in labels.map { IconRenderer.image(provider: p, label: $0) } }
+            let rows = Provider.allCases.map { p in labels.map { IconRenderer.image(provider: p, label: $0.0, fill: $0.1) } }
             let gap: CGFloat = 8
             let width = rows.map { $0.reduce(gap) { $0 + $1.size.width + gap } }.max() ?? 100
             let height = CGFloat(rows.count) * (IconRenderer.height + 6) + 6

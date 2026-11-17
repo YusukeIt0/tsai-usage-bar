@@ -67,10 +67,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             let show = visible.contains(id)
             if item.isVisible != show { item.isVisible = show }
             guard show, let button = item.button else { continue }
-            let label = model.display(id).label(id.window, mode: settings.displayMode)
-            if renderedLabels[id] != label {
-                button.image = IconRenderer.image(provider: id.provider, label: label)
-                renderedLabels[id] = label
+            let display = model.display(id)
+            let label = display.label(id.window, mode: settings.displayMode)
+            let fill = display.percent(mode: settings.displayMode)
+            let key = "\(label)|\(fill.map(String.init) ?? "-")"
+            if renderedLabels[id] != key {
+                button.image = IconRenderer.image(provider: id.provider, label: label, fill: fill)
+                renderedLabels[id] = key
             }
             let stale = model.isStale(id.provider)
             if button.appearsDisabled != stale { button.appearsDisabled = stale }
