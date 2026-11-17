@@ -152,6 +152,15 @@ final class VisibilityTests: XCTestCase {
                        [ItemID(.codex, .fiveHour)])
     }
 
+    func testProvidersWithAllItemsOffArePaused() {
+        let both: Set<Provider> = [.claude, .codex]
+        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.claude, .fiveHour)], initialized: both), [.claude])
+        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.codex, .sevenDay), ItemID(.claude, .sevenDay)],
+                                                      initialized: both), both)
+        // Not reported yet: keep active so available windows can be learned.
+        XCTAssertEqual(ItemVisibility.activeProviders(enabled: [ItemID(.claude, .fiveHour)], initialized: [.claude]), both)
+    }
+
     func testUnknownProviderStateDoesNotHide() {
         let enabled: Set<ItemID> = [ItemID(.claude, .fiveHour), ItemID(.codex, .fiveHour)]
         XCTAssertEqual(ItemVisibility.visible(enabled: enabled, snapshots: [:]).count, 2)

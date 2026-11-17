@@ -93,6 +93,9 @@ struct SettingsView: View {
         HStack {
             Text("Codex")
             Spacer()
+            if !model.isActive(.codex) {
+                Text(s.pausedHidden).foregroundStyle(.secondary)
+            } else {
             switch model.codex.lastError {
             case .some(.notFound):
                 Text(s.codexNotFound).foregroundStyle(.secondary)
@@ -104,6 +107,7 @@ struct SettingsView: View {
             case .none:
                 Text(model.codex.snapshot != nil ? s.connected : s.notConnected).foregroundStyle(.secondary)
             }
+            }
         }
     }
 
@@ -114,7 +118,7 @@ struct SettingsView: View {
                 Spacer()
                 switch model.claudeLink {
                 case .linked:
-                    Text(s.connected).foregroundStyle(.secondary)
+                    Text(model.isActive(.claude) ? s.connected : s.pausedHidden).foregroundStyle(.secondary)
                     Button(s.disconnect) { unlink() }
                 case .notLinked:
                     Button(s.connect) { confirmLink() }

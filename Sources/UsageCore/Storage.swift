@@ -21,6 +21,8 @@ public struct AppPaths: Sendable {
     }
 
     public var linkRecordURL: URL { supportDirectory.appendingPathComponent("claude-statusline-link.json") }
+    /// Present while all Claude items are turned off; the relay then stores nothing.
+    public var claudePausedURL: URL { supportDirectory.appendingPathComponent("claude-paused") }
     public var backupDirectory: URL { supportDirectory.appendingPathComponent("backups", isDirectory: true) }
     public var hookDirectory: URL { supportDirectory.appendingPathComponent("bin", isDirectory: true) }
     public var installedHookURL: URL { hookDirectory.appendingPathComponent("tsai-usagebar-hook") }

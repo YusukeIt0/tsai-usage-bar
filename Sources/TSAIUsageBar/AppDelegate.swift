@@ -4,20 +4,17 @@ import SwiftUI
 import UsageCore
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate {
     let settings = AppSettings()
     let model = UsageModel()
     private var items: [ItemID: NSStatusItem] = [:]
     private var renderedLabels: [ItemID: String] = [:]
-    private let popover = NSPopover()
+    private let panel = MenuPanel()
     private var popoverProvider: Provider?
     private var settingsWindow: NSWindow?
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        popover.behavior = .transient
-        popover.delegate = self
-
         // One status item per menu bar entry. The autosave name keeps the ⌘-drag order.
         for id in ItemID.allCases {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -42,12 +39,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateItems() }
             .store(in: &cancellables)
+        settings.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.applyActiveProviders() }
+            .store(in: &cancellables)
+        applyActiveProviders()
 
         updateItems()
         model.start()
     }
 
     /// First data from a provider turns on its 5-hour item, or 7-day when 5-hour is not offered.
+    private func applyActiveProviders() {
+        model.setActiveProviders(ItemVisibility.activeProviders(enabled: settings.enabledItems,
+                                                                initialized: settings.initializedProviders))
+    }
+
     private func applyDefaultItem(_ provider: Provider, _ snapshot: ProviderSnapshot) {
         guard !settings.initializedProviders.contains(provider),
               let id = ItemVisibility.defaultItem(for: provider, snapshot: snapshot) else { return }
@@ -85,26 +92,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     @objc private func itemClicked(_ sender: NSStatusBarButton) {
         guard let key = sender.identifier?.rawValue,
               let id = ItemID.allCases.first(where: { $0.key == key }) else { return }
-        if popover.isShown {
+        if panel.isShown {
             let same = popoverProvider == id.provider
-            popover.performClose(nil)
+            panel.close()
             if same { return }
         }
         popoverProvider = id.provider
         let view = PopoverView(provider: id.provider, model: model, settings: settings) { [weak self] in
-            self?.popover.performClose(nil)
+            self?.panel.close()
             self?.showSettings()
         }
-        popover.contentViewController = NSHostingController(rootView: view)
-        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
-        popover.contentViewController?.view.window?.makeKey()
+        panel.show(view, below: sender) { [weak self] in
+            self?.popoverProvider = nil
+            self?.model.popoverDidClose()
+        }
         model.popoverDidOpen(id.provider)
-    }
-
-    func popoverDidClose(_ notification: Notification) {
-        popoverProvider = nil
-        popover.contentViewController = nil
-        model.popoverDidClose()
     }
 
     // MARK: Settings window

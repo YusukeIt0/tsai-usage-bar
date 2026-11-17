@@ -13,6 +13,15 @@ public enum ItemVisibility {
         return [ItemID(.claude, .fiveHour)]
     }
 
+    /// Providers to keep updating. A provider whose items are all turned off is paused
+    /// (no Codex queries, no stored Claude values). A provider that has not reported yet
+    /// stays active so its available windows can be learned.
+    public static func activeProviders(enabled: Set<ItemID>, initialized: Set<Provider>) -> Set<Provider> {
+        Set(Provider.allCases.filter { p in
+            !initialized.contains(p) || enabled.contains { $0.provider == p }
+        })
+    }
+
     /// The item turned on the first time a provider reports data: its 5-hour window,
     /// or the 7-day window when the plan has no 5-hour limit.
     public static func defaultItem(for provider: Provider, snapshot: ProviderSnapshot) -> ItemID? {
