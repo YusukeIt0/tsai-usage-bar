@@ -22,6 +22,7 @@ CodexとClaude Codeの利用枠の残量・リセット時刻を、メニュー�
 - Each icon fills like a battery: the solid part matches the number shown (remaining by default, or used), and the rest is faint. With no value the whole icon is faint.
 - Up to four items: Claude Code H/W and Codex H/W. Turn each on or off in Settings; hold ⌘ and drag to reorder.
 - Numbers show **remaining** by default (100 − used). Switch to **used** in Settings.
+- Languages: English, 日本語, 繁體中文, 简体中文, 한국어, Français, Deutsch and ไทย. Automatic picks the first supported macOS language (otherwise English); you can also choose one in Settings. Dates and times follow the chosen language and your Mac's time zone.
 - Click an item for that provider's two windows, bars, and reset times in your Mac's time zone.
 - Turning off both items of a provider pauses it: no Codex queries, and nothing stored from Claude Code.
 - Windows your plan doesn't have (for example, plans without a 5-hour limit) are hidden automatically.
@@ -93,6 +94,7 @@ Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application ident
 
 - **表示:** `H` は5時間、`W` は7日間の利用枠。初期設定は残量（100 − 使用率）で、設定から使用率に切り替えられます。値がない、またはリセット後に新しい値がまだ届いていないときは `H—` と表示します。
 - **アイコン:** バッテリーのように、表示中の数値（残量または使用率）の分だけ濃く塗られ、残りは薄く表示されます。値がないときは全体が薄くなります。
+- **言語:** 英語・日本語・繁体字中国語・簡体字中国語・韓国語・フランス語・ドイツ語・タイ語。自動ではmacOSの優先言語のうち最初の対応言語（なければ英語）。設定から選択も可能。
 - **項目:** Claude Code・Codex のH/W最大4つ。設定で個別にON/OFF、⌘ドラッグで並べ替え。プランにない枠（5時間制限がないプラン等）は自動で非表示になります。あるサービスの項目を両方OFFにすると、そのサービスの取得を止めます。
 - **クリック:** そのサービスの5時間・7日間の棒グラフと、Macのタイムゾーンでのリセット時刻を表示します。
 - **インストール・更新:** 上記の `curl … | sh`（sudo不要、`~/Applications` に導入、設定は保持）。現在のビルドはApple公証前です。

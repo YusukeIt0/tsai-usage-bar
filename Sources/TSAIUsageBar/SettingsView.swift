@@ -32,8 +32,9 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 Picker(s.language, selection: $settings.language) {
                     Text(s.automatic).tag(LanguageSetting.automatic)
-                    Text("日本語").tag(LanguageSetting.japanese)
-                    Text("English").tag(LanguageSetting.english)
+                    ForEach(AppLanguage.allCases, id: \.self) { lang in
+                        Text(lang.nativeName).tag(LanguageSetting.fixed(lang))
+                    }
                 }
                 Toggle(s.launchAtLogin, isOn: Binding(
                     get: { launchAtLogin },

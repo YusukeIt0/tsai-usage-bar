@@ -57,16 +57,17 @@ enum UIPreview {
         settings.enabledItems = [ItemID(.claude, .fiveHour), ItemID(.codex, .sevenDay)]
         let model = UsageModel()
         let updates = UpdateChecker(defaults: defaults)
-        for (lang, setting) in [("ja", LanguageSetting.japanese), ("en", LanguageSetting.english)] {
+        for lang in AppLanguage.allCases {
+            let setting = LanguageSetting.fixed(lang)
             settings.language = setting
             for appearance in ["light", "dark"] {
                 let scheme: ColorScheme = appearance == "light" ? .light : .dark
                 for p in Provider.allCases {
                     save(PopoverView(provider: p, model: model, settings: settings, updates: updates, openSettings: {}),
-                         scheme: scheme, to: "\(outputDir)/popover-\(p.rawValue)-\(lang)-\(appearance).png")
+                         scheme: scheme, to: "\(outputDir)/popover-\(p.rawValue)-\(lang.rawValue)-\(appearance).png")
                 }
             }
-            save(SettingsView(model: model, settings: settings, updates: updates), scheme: .light, to: "\(outputDir)/settings-\(lang).png")
+            save(SettingsView(model: model, settings: settings, updates: updates), scheme: .light, to: "\(outputDir)/settings-\(lang.rawValue).png")
         }
     }
 

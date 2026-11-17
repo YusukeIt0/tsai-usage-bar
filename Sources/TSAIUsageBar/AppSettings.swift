@@ -24,7 +24,7 @@ final class AppSettings: ObservableObject {
         let keys = defaults.stringArray(forKey: "enabledItems")
         enabledItems = Set((keys ?? []).compactMap { k in ItemID.allCases.first { $0.key == k } })
         displayMode = DisplayMode(rawValue: defaults.string(forKey: "displayMode") ?? "") ?? .remaining
-        language = LanguageSetting(rawValue: defaults.string(forKey: "language") ?? "") ?? .automatic
+        language = LanguageSetting(storedValue: defaults.string(forKey: "language") ?? "") ?? .automatic
         initializedProviders = Set((defaults.stringArray(forKey: "initializedProviders") ?? [])
             .compactMap(Provider.init(rawValue:)))
     }
@@ -35,7 +35,7 @@ final class AppSettings: ObservableObject {
     private func save() {
         defaults.set(ItemID.allCases.filter { enabledItems.contains($0) }.map(\.key), forKey: "enabledItems")
         defaults.set(displayMode.rawValue, forKey: "displayMode")
-        defaults.set(language.rawValue, forKey: "language")
+        defaults.set(language.storedValue, forKey: "language")
         defaults.set(Provider.allCases.filter { initializedProviders.contains($0) }.map(\.rawValue),
                      forKey: "initializedProviders")
     }
