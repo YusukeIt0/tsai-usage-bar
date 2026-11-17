@@ -2,8 +2,6 @@
 
 A lightweight macOS menu bar app that shows how much of your **Claude Code** and **Codex** usage limits is left and when they reset, plus your **GitHub Actions** free usage for private repositories.
 
-Claude Code・Codexの利用枠の残量とリセット時刻、GitHub Actionsの無料枠（非公開リポジトリ）を、メニューバーで確認できる軽量なmacOSアプリです。（[日本語](#日本語)）
-
 <p>
   <img src="docs/images/icons-light.png" alt="Menu bar icons on a light menu bar" width="640"><br>
   <img src="docs/images/icons-dark.png" alt="Menu bar icons on a dark menu bar" width="640">
@@ -98,22 +96,6 @@ scripts/release.sh           # tag and publish a GitHub Release (maintainers)
 ```
 
 Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application identity to sign; otherwise builds are ad-hoc signed.
-
----
-
-## 日本語
-
-- **表示:** `H` は5時間、`W` は7日間の利用枠（Claude Code・Codex）、`M` はGitHub Actionsの今月の無料枠（非公開リポジトリ）。初期設定は残量（100 − 使用率）で、設定から使用率に切り替えられます。値がない、またはリセット後に新しい値がまだ届いていないときは `H—` と表示します。
-- **アイコン:** バッテリーのように、表示中の数値の分だけ濃く塗られ、残りは薄く表示されます。値がないときは全体が薄くなります。
-- **項目:** Claude Code H/W・Codex H/W・GitHub Actions M の最大5つ。設定で個別にON/OFF、⌘ドラッグで並べ替え。プランにない枠は自動で非表示。あるサービスの項目をすべてOFFにすると、そのサービスの取得を止めます。
-- **クリック:** そのサービスの棒グラフ、リセット時刻（Macのタイムゾーン）、残り時間を表示します。
-- **言語:** 英語・日本語・繁体字中国語・簡体字中国語・韓国語・フランス語・ドイツ語・タイ語。自動ではmacOSの優先言語のうち最初の対応言語（なければ英語）。設定から選択も可能。
-- **インストール:** 上記の `curl … | sh`（sudo不要、`~/Applications` に導入）。現在のビルドはApple公証前です。
-- **アップデート:** 1日1回確認し、新しい版があればポップアップと設定に「アップデート」が出ます（設定は保持）。設定の「確認」ですぐ確認もできます。
-- **Codex:** Codex CLIにサインイン済みならそのまま使えます。未サインインなら「ブラウザでCodexにサインイン」から。
-- **Claude Code:** 設定の「連携する」から。`~/.claude/settings.json` をバックアップし、既存のstatusLine表示を保ったまま中継します。「連携を解除」やアンインストールで元に戻ります。
-- **GitHub Actions:** 設定の「GitHubと連携」から（コードはコピー済みでブラウザが開くので、貼り付けて承認）。権限はプランと利用量の読み取りのみ。公開リポジトリは無料・上限なしのため、非公開リポジトリが使う月の無料枠（Free 12ドル・Pro 18ドル分、他のプランは「—」）を表示。毎月1日 00:00（UTC）にリセット。GitHubの集計は数時間遅れることがあります。
-- **プライバシー:** 独自サーバー・分析なし。アプリ自身の通信は1日1回の更新確認と、GitHub連携時の読み取りだけです。保存するのは利用率・リセット時刻・設定と、GitHub連携時のトークン（本人だけが読めるファイル）です。
 
 ## License
 
