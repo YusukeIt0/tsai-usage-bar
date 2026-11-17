@@ -306,3 +306,31 @@ final class StatusLineLinkTests: XCTestCase {
         XCTAssertThrowsError(try StatusLineLink(paths: paths, settingsURL: settingsURL).link())
     }
 }
+
+final class UpdateTests: XCTestCase {
+    func testVersionComparison() {
+        XCTAssertLessThan(AppVersion("0.1.9")!, AppVersion("0.1.10")!)
+        XCTAssertLessThan(AppVersion("v0.1.3")!, AppVersion("0.2")!)
+        XCTAssertEqual(AppVersion("0.1")!, AppVersion("0.1.0")!)
+        XCTAssertNil(AppVersion("dev"))
+        XCTAssertNil(AppVersion("0.1.4-beta"))
+        XCTAssertNil(AppVersion("1..2"))
+    }
+
+    func testParsesOnlyPublishedReleases() {
+        let ok = #"{"tag_name":"v0.1.4","draft":false,"prerelease":false}"#
+        XCTAssertEqual(ReleaseInfo.latestVersion(fromJSON: Data(ok.utf8)), AppVersion("0.1.4"))
+        XCTAssertNil(ReleaseInfo.latestVersion(fromJSON: Data(#"{"tag_name":"v0.2.0","prerelease":true}"#.utf8)))
+        XCTAssertNil(ReleaseInfo.latestVersion(fromJSON: Data(#"{"tag_name":"v0.2.0","draft":true}"#.utf8)))
+        XCTAssertNil(ReleaseInfo.latestVersion(fromJSON: Data("{}".utf8)))
+    }
+
+    func testUpdateOnlyWhenNewerAndKnown() {
+        XCTAssertTrue(ReleaseInfo.isUpdate(latest: AppVersion("0.1.4"), current: AppVersion("0.1.3")))
+        XCTAssertFalse(ReleaseInfo.isUpdate(latest: AppVersion("0.1.3"), current: AppVersion("0.1.3")))
+        XCTAssertFalse(ReleaseInfo.isUpdate(latest: AppVersion("0.1.2"), current: AppVersion("0.1.3")))
+        XCTAssertFalse(ReleaseInfo.isUpdate(latest: AppVersion("0.1.4"), current: nil)) // dev build
+        XCTAssertEqual(ReleaseInfo.installerURL(for: AppVersion("0.1.4")!).absoluteString,
+                       "https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/v0.1.4/install.sh")
+    }
+}

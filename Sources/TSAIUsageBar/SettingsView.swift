@@ -5,6 +5,7 @@ import UsageCore
 struct SettingsView: View {
     @ObservedObject var model: UsageModel
     @ObservedObject var settings: AppSettings
+    @ObservedObject var updates: UpdateChecker
     @State private var linkError: String?
     @State private var launchAtLogin = false
 
@@ -47,6 +48,25 @@ struct SettingsView: View {
                 claudeRow
                 if let linkError {
                     Text(linkError).font(.caption).foregroundStyle(.red)
+                }
+            }
+
+            Section {
+                if updates.updateAvailable, let v = updates.latest {
+                    UpdateRow(text: s.updateAvailable(v.description), updates: updates, strings: s)
+                } else {
+                    HStack {
+                        Text("\(s.version) \(AppInfo.version)")
+                        Spacer()
+                        if updates.checking {
+                            Text(s.refreshing).foregroundStyle(.secondary)
+                        } else {
+                            if updates.lastChecked != nil, !updates.checkFailed {
+                                Text(s.upToDate).foregroundStyle(.secondary)
+                            }
+                            Button(s.checkForUpdates) { Task { await updates.check() } }
+                        }
+                    }
                 }
             }
 

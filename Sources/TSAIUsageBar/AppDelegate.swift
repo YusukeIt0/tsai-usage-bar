@@ -7,6 +7,7 @@ import UsageCore
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let settings = AppSettings()
     let model = UsageModel()
+    let updates = UpdateChecker()
     private var items: [ItemID: NSStatusItem] = [:]
     private var renderedLabels: [ItemID: String] = [:]
     private let panel = MenuPanel()
@@ -47,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         updateItems()
         model.start()
+        updates.start()
     }
 
     /// First data from a provider turns on its 5-hour item, or 7-day when 5-hour is not offered.
@@ -98,7 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if same { return }
         }
         popoverProvider = id.provider
-        let view = PopoverView(provider: id.provider, model: model, settings: settings) { [weak self] in
+        let view = PopoverView(provider: id.provider, model: model, settings: settings, updates: updates) { [weak self] in
             self?.panel.close()
             self?.showSettings()
         }
@@ -113,7 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettings() {
         if settingsWindow == nil {
-            let host = NSHostingController(rootView: SettingsView(model: model, settings: settings))
+            let host = NSHostingController(rootView: SettingsView(model: model, settings: settings, updates: updates))
             let w = NSWindow(contentViewController: host)
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false

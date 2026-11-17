@@ -83,6 +83,14 @@ public struct Strings: Sendable {
     public var connections: String { t("接続", "Connections") }
     public var connected: String { t("接続済み", "Connected") }
     public var notConnected: String { t("未接続", "Not connected") }
+    // Updates
+    public func updateAvailable(_ v: String) -> String { t("新しいバージョン v\(v) があります", "Version \(v) is available") }
+    public var updateNow: String { t("アップデート", "Update") }
+    public var updating: String { t("アップデート中…", "Updating…") }
+    public var updateFailed: String { t("アップデートできませんでした", "Update failed") }
+    public var upToDate: String { t("最新です", "Up to date") }
+    public var checkForUpdates: String { t("確認", "Check") }
+    public var version: String { t("バージョン", "Version") }
     public var pausedHidden: String { t("表示OFFのため停止中", "Paused (hidden)") }
     public var connect: String { t("連携する", "Connect") }
     public var disconnect: String { t("連携を解除", "Disconnect") }
