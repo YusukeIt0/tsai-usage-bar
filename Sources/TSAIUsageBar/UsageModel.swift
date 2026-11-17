@@ -30,6 +30,8 @@ final class UsageModel: ObservableObject {
     @Published private(set) var codexSigningIn = false
     /// Advances at reset times (and every 30 s while a popover is open) so derived text updates.
     @Published private(set) var now = Date()
+    /// Providers with at least one item turned on. Others are not updated at all.
+    @Published private(set) var activeProviders: Set<Provider> = Set(Provider.allCases)
 
     let paths = AppPaths()
     private let policy = FetchPolicy()
@@ -55,6 +57,28 @@ final class UsageModel: ObservableObject {
         refreshCodex(force: true)
         scheduleTick()
     }
+
+    func setActiveProviders(_ active: Set<Provider>) {
+        // The relay's pause flag always follows the setting, including at launch.
+        let paused = FileManager.default.fileExists(atPath: paths.claudePausedURL.path)
+        if active.contains(.claude), paused {
+            try? FileManager.default.removeItem(at: paths.claudePausedURL)
+        } else if !active.contains(.claude), !paused {
+            try? paths.ensureDirectory()
+            FileManager.default.createFile(atPath: paths.claudePausedURL.path, contents: nil)
+        }
+        let old = activeProviders
+        guard active != old else { return }
+        activeProviders = active
+        if active.contains(.claude), !old.contains(.claude) { reloadClaude() }
+        if active.contains(.codex) {
+            if !old.contains(.codex) { refreshCodex(force: true) }
+        } else {
+            codexTimer?.invalidate()
+        }
+    }
+
+    func isActive(_ p: Provider) -> Bool { activeProviders.contains(p) }
 
     func status(_ p: Provider) -> ProviderStatus { p == .claude ? claude : codex }
 
@@ -105,6 +129,7 @@ final class UsageModel: ObservableObject {
     // MARK: Codex
 
     func refreshCodex(force: Bool) {
+        guard isActive(.codex) else { return } // all Codex items off: no queries
         guard !codex.isFetching else { return } // merge overlapping requests
         if !force, let last = codex.lastAttempt, Date().timeIntervalSince(last) < policy.minimumGap {
             scheduleCodex()
@@ -140,7 +165,7 @@ final class UsageModel: ObservableObject {
 
     private func scheduleCodex() {
         codexTimer?.invalidate()
-        guard !sleeping, !codex.isFetching else { return }
+        guard !sleeping, !codex.isFetching, isActive(.codex) else { return }
         // Without the codex command there is nothing to poll until the person acts.
         if codex.lastError == .notFound || codex.lastError == .notSignedIn {
             if !popoverOpen { return }
@@ -182,6 +207,7 @@ final class UsageModel: ObservableObject {
     }
 
     func reloadClaude() {
+        guard isActive(.claude) else { return }
         let snap = SnapshotStore.load(paths.snapshotURL(.claude))
         guard snap != claude.snapshot else { return }
         claude.snapshot = snap

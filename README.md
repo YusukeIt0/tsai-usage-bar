@@ -23,6 +23,7 @@ CodexとClaude Codeの利用枠の残量・リセット時刻を、メニュー�
 - Up to four items: Claude Code H/W and Codex H/W. Turn each on or off in Settings; hold ⌘ and drag to reorder.
 - Numbers show **remaining** by default (100 − used). Switch to **used** in Settings.
 - Click an item for that provider's two windows, bars, and reset times in your Mac's time zone.
+- Turning off both items of a provider pauses it: no Codex queries, and nothing stored from Claude Code.
 - Windows your plan doesn't have (for example, plans without a 5-hour limit) are hidden automatically.
 - Values are never guessed. Reaching a reset time doesn't turn a value into 100%; the app waits for the next official value.
 
@@ -91,7 +92,7 @@ Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application ident
 
 - **表示:** `H` は5時間、`W` は7日間の利用枠。初期設定は残量（100 − 使用率）で、設定から使用率に切り替えられます。値がない、またはリセット後に新しい値がまだ届いていないときは `H—` と表示します。
 - **アイコン:** バッテリーのように、表示中の数値（残量または使用率）の分だけ濃く塗られ、残りは薄く表示されます。値がないときは全体が薄くなります。
-- **項目:** Claude Code・Codex のH/W最大4つ。設定で個別にON/OFF、⌘ドラッグで並べ替え。プランにない枠（5時間制限がないプラン等）は自動で非表示になります。
+- **項目:** Claude Code・Codex のH/W最大4つ。設定で個別にON/OFF、⌘ドラッグで並べ替え。プランにない枠（5時間制限がないプラン等）は自動で非表示になります。あるサービスの項目を両方OFFにすると、そのサービスの取得を止めます。
 - **クリック:** そのサービスの5時間・7日間の棒グラフと、Macのタイムゾーンでのリセット時刻を表示します。
 - **インストール・更新:** 上記の `curl … | sh`（sudo不要、`~/Applications` に導入、設定は保持）。現在のビルドはApple公証前です。
 - **Codex:** Codex CLIにサインイン済みならそのまま使えます。未サインインなら「ブラウザでCodexにサインイン」から公式の手順でサインインできます。

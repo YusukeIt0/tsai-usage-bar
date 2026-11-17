@@ -83,6 +83,7 @@ public struct Strings: Sendable {
     public var connections: String { t("接続", "Connections") }
     public var connected: String { t("接続済み", "Connected") }
     public var notConnected: String { t("未接続", "Not connected") }
+    public var pausedHidden: String { t("表示OFFのため停止中", "Paused (hidden)") }
     public var connect: String { t("連携する", "Connect") }
     public var disconnect: String { t("連携を解除", "Disconnect") }
     public var replacedByUser: String {

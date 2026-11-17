@@ -14,6 +14,7 @@ let paths = AppPaths()
 let args = CommandLine.arguments.dropFirst()
 
 func storeClaudeLimits(from input: Data) {
+    if FileManager.default.fileExists(atPath: paths.claudePausedURL.path) { return }
     guard let windows = try? ClaudeStatusLineParser.parseWindows(input), !windows.isEmpty else { return }
     let url = paths.snapshotURL(.claude)
     let existing = SnapshotStore.load(url)
