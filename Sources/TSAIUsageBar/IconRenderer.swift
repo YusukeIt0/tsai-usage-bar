@@ -1,18 +1,22 @@
 import AppKit
 import UsageCore
 
-/// Draws a provider silhouette with the label cut out of it, as a template image.
-/// Template images follow light/dark menu bars and the highlighted state automatically,
-/// and the cut-out text always has the menu bar's own contrast against the silhouette.
+/// Draws a provider silhouette as a template image that fills like a battery gauge:
+/// the left part, proportional to the shown percentage, is solid and the rest is faint.
+/// The label is cut out of the solid part and drawn solid over the faint part, so it keeps
+/// full contrast everywhere. Template images follow light/dark menu bars automatically.
 @MainActor
 enum IconRenderer {
     static let height: CGFloat = 18
+    /// Opacity of the unfilled part of the silhouette.
+    static let emptyAlpha: CGFloat = 0.32
     private static var cache: [String: NSImage] = [:]
 
-    static func image(provider: Provider, label: String) -> NSImage {
-        let key = "\(provider.rawValue)|\(label)"
+    /// `fill` is 0...100, or nil when there is no value (whole silhouette faint).
+    static func image(provider: Provider, label: String, fill: Int?) -> NSImage {
+        let key = "\(provider.rawValue)|\(label)|\(fill.map(String.init) ?? "-")"
         if let img = cache[key] { return img }
-        let img = render(provider: provider, label: label)
+        let img = render(provider: provider, label: label, fill: fill)
         if cache.count > 64 { cache.removeAll() }
         cache[key] = img
         return img
@@ -31,20 +35,38 @@ enum IconRenderer {
         (label as NSString).size(withAttributes: [.font: font()])
     }
 
-    static func render(provider: Provider, label: String) -> NSImage {
+    static func render(provider: Provider, label: String, fill: Int?) -> NSImage {
         let text = textSize(label)
         let shape: (CGFloat) -> (NSBezierPath, CGRect) = provider == .claude ? claudeShape : codexShape
         // Size the silhouette to the label; "H100%" must fit without clipping.
         let width = ceil(provider == .claude ? text.width + 13 : text.width + 12)
         let (path, textBox) = shape(width)
+        let fraction = CGFloat(min(100, max(0, fill ?? 0))) / 100
         let img = NSImage(size: NSSize(width: width, height: height), flipped: true) { _ in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
-            NSColor.black.setFill()
+            let origin = CGPoint(x: textBox.midX - text.width / 2, y: textBox.midY - text.height / 2)
+            let attrs: [NSAttributedString.Key: Any] = [.font: font(), .foregroundColor: NSColor.black]
+            let filledRect = CGRect(x: 0, y: 0, width: width * fraction, height: height)
+            let emptyRect = CGRect(x: width * fraction, y: 0, width: width * (1 - fraction), height: height)
+
+            // Faint part: dim silhouette with solid text.
+            ctx.saveGState()
+            ctx.clip(to: emptyRect)
+            NSColor.black.withAlphaComponent(emptyAlpha).setFill()
             path.fill()
-            ctx.setBlendMode(.destinationOut)
-            let origin = CGPoint(x: textBox.midX - text.width / 2,
-                                 y: textBox.midY - text.height / 2)
-            (label as NSString).draw(at: origin, withAttributes: [.font: font(), .foregroundColor: NSColor.black])
+            (label as NSString).draw(at: origin, withAttributes: attrs)
+            ctx.restoreGState()
+
+            // Filled part: solid silhouette with the text cut out.
+            if fraction > 0 {
+                ctx.saveGState()
+                ctx.clip(to: filledRect)
+                NSColor.black.setFill()
+                path.fill()
+                ctx.setBlendMode(.destinationOut)
+                (label as NSString).draw(at: origin, withAttributes: attrs)
+                ctx.restoreGState()
+            }
             return true
         }
         img.isTemplate = true
