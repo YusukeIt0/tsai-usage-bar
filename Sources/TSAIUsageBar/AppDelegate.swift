@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let settings = AppSettings()
     let model = UsageModel()
     let updates = UpdateChecker()
+    let notifier = Notifier()
     private var items: [ItemID: NSStatusItem] = [:]
     private var renderedLabels: [ItemID: String] = [:]
     private let panel = MenuPanel()
@@ -29,6 +30,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             items[id] = item
         }
 
+        model.onResetCreditArrived = { [weak self] remaining in
+            guard let self else { return }
+            self.notifier.postResetCreditArrived(remaining: remaining, strings: self.settings.strings)
+        }
+        notifier.refreshPermission()
         model.onSnapshotArrived = { [weak self] provider, snapshot in
             self?.applyDefaultItem(provider, snapshot)
         }
@@ -53,6 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// First data from a provider turns on its 5-hour item, or 7-day when 5-hour is not offered.
     private func applyActiveProviders() {
+        model.notifyResetCredits = settings.notifyResetCredits
         if model.githubBudgetUSD != settings.githubBudgetUSD { model.githubBudgetUSD = settings.githubBudgetUSD }
         model.setActiveProviders(ItemVisibility.activeProviders(enabled: settings.enabledItems,
                                                                 initialized: settings.initializedProviders))
@@ -116,7 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettings() {
         if settingsWindow == nil {
-            let host = NSHostingController(rootView: SettingsView(model: model, settings: settings, updates: updates))
+            let host = NSHostingController(rootView: SettingsView(model: model, settings: settings, updates: updates, notifier: notifier))
             let w = NSWindow(contentViewController: host)
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false

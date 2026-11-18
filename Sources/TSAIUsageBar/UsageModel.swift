@@ -66,6 +66,9 @@ final class UsageModel: ObservableObject {
     private var networkWasDown = false
     private var observers: [NSObjectProtocol] = []
     var onSnapshotArrived: ((Provider, ProviderSnapshot) -> Void)?
+    var onResetCreditArrived: ((Int) -> Void)?
+    /// From Settings: notify when Codex reset credits arrive.
+    var notifyResetCredits = false
 
     init() {
         claude.snapshot = SnapshotStore.load(paths.snapshotURL(.claude))
@@ -233,7 +236,8 @@ final class UsageModel: ObservableObject {
         codex.lastAttempt = Date()
         codexTimer?.invalidate()
         Task {
-            let result = await Task.detached { await CodexClient.readRateLimits() }.value
+            let details = self.popoverOpen
+            let result = await Task.detached { await CodexClient.readRateLimits(details: details) }.value
             self.applyCodex(result)
         }
     }
@@ -241,7 +245,9 @@ final class UsageModel: ObservableObject {
     private func applyCodex(_ result: Result<ProviderSnapshot, CodexError>) {
         codex.isFetching = false
         switch result {
-        case .success(let snap):
+        case .success(var snap):
+            snap.resetCredits = snap.resetCredits?.keepingExpiry(from: codex.snapshot?.resetCredits)
+            noticeResetCredits(snap.resetCredits)
             codex.snapshot = snap
             codex.lastError = nil
             codex.consecutiveFailures = 0
@@ -257,6 +263,19 @@ final class UsageModel: ObservableObject {
         now = Date()
         scheduleCodex()
         scheduleTick()
+    }
+
+    /// Notifies when the Codex reset-credit count went up since the last value seen
+    /// (kept across launches, so credits granted while the app was closed are noticed once).
+    private func noticeResetCredits(_ credits: ResetCredits?) {
+        guard let credits else { return }
+        let key = "codex.resetCredits.lastCount"
+        let defaults = UserDefaults.standard
+        let previous = defaults.object(forKey: key) as? Int
+        defaults.set(credits.available, forKey: key)
+        if notifyResetCredits, ResetCredits.arrived(previous: previous, current: credits.available) != nil {
+            onResetCreditArrived?(credits.available)
+        }
     }
 
     private func scheduleCodex() {

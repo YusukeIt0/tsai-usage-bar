@@ -92,6 +92,8 @@ public struct ProviderSnapshot: Codable, Equatable, Sendable {
     /// Windows included in the latest official reply. A window missing here is not offered
     /// for this account or plan (for example, plans without a 5-hour limit).
     public var reportedKinds: [WindowKind]?
+    /// Codex limit-reset credits ("reset tickets"), when the service reports them.
+    public var resetCredits: ResetCredits?
 
     public init(windows: [WindowKind: UsageWindow], fetchedAt: Date, reportedKinds: [WindowKind]? = nil) {
         self.windows = windows
@@ -111,4 +113,29 @@ public struct ProviderSnapshot: Codable, Equatable, Sendable {
 public enum DisplayMode: String, Codable, CaseIterable, Sendable {
     case remaining
     case used
+}
+
+/// Codex limit-reset credits from `rateLimitResetCredits`.
+public struct ResetCredits: Codable, Equatable, Sendable {
+    public var available: Int
+    /// Earliest expiry among available credits; nil when unknown or none expire.
+    public var earliestExpiry: Date?
+
+    public init(available: Int, earliestExpiry: Date?) {
+        self.available = available
+        self.earliestExpiry = earliestExpiry
+    }
+
+    /// How many credits arrived since `previous`, or nil when none did. The first value
+    /// seen (no previous count) is a baseline, not an arrival.
+    public static func arrived(previous: Int?, current: Int) -> Int? {
+        guard let previous, current > previous else { return nil }
+        return current - previous
+    }
+
+    /// Keeps a known expiry when a lighter read (count only) reports the same count.
+    public func keepingExpiry(from old: ResetCredits?) -> ResetCredits {
+        guard earliestExpiry == nil, let old, old.available == available else { return self }
+        return ResetCredits(available: available, earliestExpiry: old.earliestExpiry)
+    }
 }

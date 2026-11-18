@@ -20,6 +20,8 @@ final class AppSettings: ObservableObject {
     @Published var initializedProviders: Set<Provider> { didSet { save() } }
     /// Optional monthly GitHub Actions budget in USD, as set on GitHub. Nil = none.
     @Published var githubBudgetUSD: Double? { didSet { save() } }
+    /// Notify when Codex limit-reset credits arrive (off by default).
+    @Published var notifyResetCredits: Bool { didSet { save() } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -29,6 +31,7 @@ final class AppSettings: ObservableObject {
         language = LanguageSetting(storedValue: defaults.string(forKey: "language") ?? "") ?? .automatic
         initializedProviders = Set((defaults.stringArray(forKey: "initializedProviders") ?? [])
             .compactMap(Provider.init(rawValue:)))
+        notifyResetCredits = defaults.bool(forKey: "notifyResetCredits")
         let budget = defaults.double(forKey: "githubBudgetUSD")
         githubBudgetUSD = budget > 0 ? budget : nil
     }
@@ -42,6 +45,7 @@ final class AppSettings: ObservableObject {
         defaults.set(language.storedValue, forKey: "language")
         defaults.set(Provider.allCases.filter { initializedProviders.contains($0) }.map(\.rawValue),
                      forKey: "initializedProviders")
+        defaults.set(notifyResetCredits, forKey: "notifyResetCredits")
         if let githubBudgetUSD, githubBudgetUSD > 0 {
             defaults.set(githubBudgetUSD, forKey: "githubBudgetUSD")
         } else {

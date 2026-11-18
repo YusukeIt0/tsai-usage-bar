@@ -27,7 +27,18 @@ public enum CodexRateLimitParser {
             windows[kind] = UsageWindow(usedPercent: clampPercent(used),
                                         resetsAt: epochDate(w["resetsAt"]))
         }
-        return ProviderSnapshot(windows: windows, fetchedAt: fetchedAt)
+        var snapshot = ProviderSnapshot(windows: windows, fetchedAt: fetchedAt)
+        snapshot.resetCredits = resetCredits(in: result)
+        return snapshot
+    }
+
+    /// `rateLimitResetCredits`: `availableCount`, plus detail rows when they were requested.
+    static func resetCredits(in result: [String: Any]) -> ResetCredits? {
+        guard let summary = result["rateLimitResetCredits"] as? [String: Any],
+              let count = intValue(summary["availableCount"]) else { return nil }
+        let rows = (summary["credits"] as? [[String: Any]]) ?? []
+        let expiries = rows.filter { ($0["status"] as? String) == "available" }.compactMap { epochDate($0["expiresAt"]) }
+        return ResetCredits(available: max(0, count), earliestExpiry: expiries.min())
     }
 
     /// Picks the Codex bucket. Prefers the multi-bucket view keyed by `codex`; falls back

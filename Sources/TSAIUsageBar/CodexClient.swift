@@ -210,7 +210,8 @@ enum ShellLookup {
 enum CodexClient {
     static let timeout: TimeInterval = 15
 
-    static func readRateLimits() async -> Result<ProviderSnapshot, CodexError> {
+    /// `details`: also read reset-credit detail rows (expiry); done only when a panel is open.
+    static func readRateLimits(details: Bool = false) async -> Result<ProviderSnapshot, CodexError> {
         guard let exe = CodexLocator.find() else { return .failure(.notFound) }
         let session = CodexAppServerSession(executable: exe)
         defer { session.close() }
@@ -224,7 +225,7 @@ enum CodexClient {
             return .failure(.notSignedIn)
         }
         let r = await session.request("account/rateLimits/read",
-                                      params: ["excludeResetCreditDetails": true], timeout: timeout)
+                                      params: ["excludeResetCreditDetails": !details], timeout: timeout)
         switch r {
         case .success(let result):
             do { return .success(try CodexRateLimitParser.parse(result: result, fetchedAt: Date())) }

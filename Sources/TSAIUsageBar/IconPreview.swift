@@ -72,7 +72,7 @@ enum UIPreview {
                          scheme: scheme, to: "\(outputDir)/popover-\(p.rawValue)-\(lang.rawValue)-\(appearance).png")
                 }
             }
-            save(SettingsView(model: model, settings: settings, updates: updates), scheme: .light, to: "\(outputDir)/settings-\(lang.rawValue).png")
+            save(SettingsView(model: model, settings: settings, updates: updates, notifier: Notifier()), scheme: .light, to: "\(outputDir)/settings-\(lang.rawValue).png")
         }
     }
 
