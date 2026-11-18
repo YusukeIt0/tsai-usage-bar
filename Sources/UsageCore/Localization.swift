@@ -154,6 +154,13 @@ public struct Strings: Sendable {
           "从开始使用此版本的那天起记录", "이 버전을 사용하기 시작한 날부터 기록됨", "Enregistré à partir du premier jour d’utilisation de cette version",
           "Wird ab dem ersten Tag mit dieser Version aufgezeichnet", "บันทึกตั้งแต่วันที่เริ่มใช้เวอร์ชันนี้")
     }
+    public var githubDailyNote: String {
+        L("Each bar: share of the monthly allowance used that day (UTC dates)", "1本＝その日に使った月の枠の割合（日付はUTC）",
+          "每條：當天用掉的每月額度比例（UTC 日期）", "每条：当天用掉的每月额度比例（UTC 日期）",
+          "막대 1개 = 그날 사용한 월 한도의 비율 (UTC 기준 날짜)", "Chaque barre : part de l’allocation mensuelle utilisée ce jour-là (dates UTC)",
+          "Jeder Balken: an diesem Tag genutzter Anteil des Monatskontingents (UTC-Daten)", "แต่ละแท่ง = สัดส่วนของโควตารายเดือนที่ใช้ในวันนั้น (วันที่ตาม UTC)")
+    }
+    public var loading: String { L("Loading…", "読み込み中…", "載入中…", "加载中…", "불러오는 중…", "Chargement…", "Wird geladen…", "กำลังโหลด…") }
     public var previousWeek: String { L("Previous week", "前の週", "上一週", "上一周", "이전 주", "Semaine précédente", "Vorherige Woche", "สัปดาห์ก่อน") }
     public var nextWeek: String { L("Next week", "次の週", "下一週", "下一周", "다음 주", "Semaine suivante", "Nächste Woche", "สัปดาห์ถัดไป") }
     public var notOffered: String {

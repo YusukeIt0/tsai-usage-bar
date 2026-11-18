@@ -76,3 +76,47 @@ public enum GitHubActionsUsage {
         return w
     }
 }
+
+/// Per-day private-repository Actions usage (USD), from GitHub's official per-day billing
+/// summaries. Keys are billing days in UTC ("yyyy-MM-dd"). Past days are kept; the last two
+/// days are read again because GitHub's totals lag.
+public struct GitHubDailyCache: Codable, Equatable, Sendable {
+    public var amounts: [String: Double] = [:]
+    public var fetchedAt: [String: Date] = [:]
+    /// Included monthly amount used as the 100% reference (from the plan).
+    public var includedAmount: Double?
+
+    public init() {}
+
+    /// Days in `keys` that still need a read at `now`.
+    public func needsRead(_ keys: [String], now: Date) -> [String] {
+        let today = Self.utcKey(now)
+        let yesterday = Self.utcKey(now.addingTimeInterval(-86_400))
+        return keys.filter { key in
+            if key > today { return false } // future
+            guard let fetched = fetchedAt[key] else { return true }
+            if key == today || key == yesterday { return now.timeIntervalSince(fetched) > 3600 }
+            return false
+        }
+    }
+
+    /// Share of the month's allowance (included plus budget) used on that day, or nil.
+    public func percent(_ key: String, budgetUSD: Double?) -> Double? {
+        guard let amount = amounts[key], let included = includedAmount, included > 0 else { return nil }
+        let limit = included + max(0, budgetUSD ?? 0)
+        return min(100, amount / limit * 100)
+    }
+
+    public static func utcKey(_ date: Date) -> String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC")!
+        return DailyUsageLog.dayKey(date, calendar: cal)
+    }
+
+    /// Keeps about two years, the period GitHub's summary endpoint serves.
+    public mutating func prune(now: Date) {
+        let cutoff = Self.utcKey(now.addingTimeInterval(-730 * 86_400))
+        amounts = amounts.filter { $0.key >= cutoff }
+        fetchedAt = fetchedAt.filter { $0.key >= cutoff }
+    }
+}

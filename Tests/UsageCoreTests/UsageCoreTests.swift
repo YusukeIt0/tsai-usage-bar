@@ -551,3 +551,28 @@ final class DailyUsageTests: XCTestCase {
         XCTAssertEqual(log.days["2026-11-18"], 1)
     }
 }
+
+final class GitHubDailyCacheTests: XCTestCase {
+    func at(_ s: String) -> Date { ISO8601DateFormatter().date(from: s)! }
+
+    func testPercentOfMonthlyAllowance() {
+        var c = GitHubDailyCache()
+        c.includedAmount = 18
+        c.amounts = ["2026-11-17": 1.8, "2026-11-18": 0]
+        XCTAssertEqual(c.percent("2026-11-17", budgetUSD: nil)!, 10, accuracy: 0.001)
+        XCTAssertEqual(c.percent("2026-11-17", budgetUSD: 18)!, 5, accuracy: 0.001)
+        XCTAssertEqual(c.percent("2026-11-18", budgetUSD: nil), 0)
+        XCTAssertNil(c.percent("2026-11-16", budgetUSD: nil)) // not read yet: no data, not zero
+    }
+
+    func testOnlyMissingOrRecentDaysAreRead() {
+        var c = GitHubDailyCache()
+        let now = at("2026-11-19T05:00:00Z")
+        c.fetchedAt = ["2026-11-10": at("2026-11-12T00:00:00Z"),
+                       "2026-11-18": now.addingTimeInterval(-7200),
+                       "2026-11-19": now.addingTimeInterval(-600)]
+        XCTAssertEqual(c.needsRead(["2026-11-10", "2026-11-11", "2026-11-18", "2026-11-19", "2026-11-20"], now: now),
+                       ["2026-11-11", "2026-11-18"]) // past day cached, recent day older than 1 h, future skipped
+        XCTAssertEqual(GitHubDailyCache.utcKey(at("2026-11-18T23:30:00Z")), "2026-11-18")
+    }
+}

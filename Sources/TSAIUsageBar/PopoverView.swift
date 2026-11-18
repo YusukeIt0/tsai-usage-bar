@@ -20,6 +20,25 @@ struct PopoverView: View {
                 windowRow(kind)
             }
 
+            if let notice = noticeText {
+                notice
+            }
+
+            if provider == .github, model.githubLogin != nil {
+                Divider()
+                DailyChart(title: s.dailyUsageTitle, note: s.githubDailyNote,
+                           emptyText: model.githubDailyFailed && !model.githubDailyLoading ? s.fetchFailed : s.loading,
+                           strings: s, lang: settings.appLanguage, now: model.now) { end in
+                    DailyChart.days(endingAt: end).map { d in
+                        (d, model.githubDaily.percent(DailyUsageLog.dayKey(d), budgetUSD: model.githubBudgetUSD))
+                    }
+                } earliest: {
+                    GitHubDailyCache.utcKey(Date().addingTimeInterval(-728 * 86_400))
+                } onShow: { days in
+                    model.loadGitHubDays(days.map { DailyUsageLog.dayKey($0) })
+                }
+            }
+
             if provider != .github, status.snapshot?.offers(.sevenDay) != false {
                 Divider()
                 DailyChart(title: s.dailyUsageTitle, note: s.dailyUsageNote, emptyText: s.dailyNoData, strings: s,
@@ -30,9 +49,6 @@ struct PopoverView: View {
                 }
             }
 
-            if let notice = noticeText {
-                notice
-            }
 
             if updates.updateAvailable, let v = updates.latest {
                 UpdateRow(text: s.updateAvailable(v.description), updates: updates, strings: s)
@@ -259,7 +275,14 @@ struct DailyChart: View {
     let now: Date
     let values: (Date) -> [(day: Date, percent: Double?)]
     let earliest: () -> String?
+    /// Called with the shown days, so data can be loaded on demand.
+    var onShow: (([Date]) -> Void)? = nil
     @State private var weeksBack = 0
+
+    /// Seven local calendar days ending at `end`.
+    static func days(endingAt end: Date) -> [Date] {
+        (0..<7).reversed().compactMap { Calendar.current.date(byAdding: .day, value: -$0, to: Calendar.current.startOfDay(for: end)) }
+    }
 
     private var end: Date {
         Calendar.current.date(byAdding: .day, value: -7 * weeksBack, to: Calendar.current.startOfDay(for: now)) ?? now
@@ -276,7 +299,9 @@ struct DailyChart: View {
                 Spacer()
                 Button { weeksBack += 1 } label: { Image(systemName: "chevron.left") }
                     .buttonStyle(.borderless).disabled(!canGoBack).help(strings.previousWeek)
+                // Fixed width so the arrows stay in place while stepping through weeks.
                 Text(rangeText(start, end)).font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
+                    .frame(width: 84)
                 Button { weeksBack -= 1 } label: { Image(systemName: "chevron.right") }
                     .buttonStyle(.borderless).disabled(weeksBack == 0).help(strings.nextWeek)
             }
@@ -310,6 +335,7 @@ struct DailyChart: View {
             Text(rows.allSatisfy({ $0.percent == nil }) ? emptyText : note)
                 .font(.caption2).foregroundStyle(.secondary)
         }
+        .task(id: weeksBack) { onShow?(Self.days(endingAt: end)) }
     }
 
     private func formatter(_ template: String) -> DateFormatter {
