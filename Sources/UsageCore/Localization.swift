@@ -141,13 +141,14 @@ public struct Strings: Sendable {
           "초기화됨 · 다음 사용 시 새 기간 시작", "Réinitialisé · une nouvelle période démarre à la prochaine utilisation",
           "Zurückgesetzt · neues Zeitfenster beginnt bei nächster Nutzung", "รีเซ็ตแล้ว · ช่วงใหม่จะเริ่มเมื่อใช้งานครั้งถัดไป")
     }
-    public var dailyUsageTitle: String {
-        L("Daily usage", "日別の使用量", "每日用量", "每日用量", "일별 사용량", "Utilisation quotidienne", "Tägliche Nutzung", "การใช้งานรายวัน")
+    /// Chart titles say what the percentages are of, so bar labels like "12%" are clear.
+    public var dailyWeeklyTitle: String {
+        L("Daily (% of week)", "日別（週間枠の％）", "每日（每週額度％）", "每日（每周额度％）",
+          "일별 (주간 한도 %)", "Par jour (% semaine)", "Täglich (% Woche)", "รายวัน (% ของสัปดาห์)")
     }
-    public var dailyUsageNote: String {
-        L("Each bar: share of the 7-day limit used that day", "1本＝その日に使った7日間枠の割合", "每條：當天用掉的 7 天上限比例",
-          "每条：当天用掉的 7 天上限比例", "막대 1개 = 그날 사용한 7일 한도의 비율", "Chaque barre : part de la limite sur 7 jours utilisée ce jour-là",
-          "Jeder Balken: an diesem Tag genutzter Anteil des 7-Tage-Limits", "แต่ละแท่ง = สัดส่วนของขีดจำกัด 7 วันที่ใช้ในวันนั้น")
+    public var dailyMonthlyTitle: String {
+        L("Daily (% of month)", "日別（月間枠の％）", "每日（每月額度％）", "每日（每月额度％）",
+          "일별 (월간 한도 %)", "Par jour (% mois)", "Täglich (% Monat)", "รายวัน (% ของเดือน)")
     }
     public var dailyNoData: String {
         L("Recorded from the day this version started", "このバージョンを使い始めた日から記録されます", "從開始使用此版本的那天起記錄",
@@ -155,10 +156,7 @@ public struct Strings: Sendable {
           "Wird ab dem ersten Tag mit dieser Version aufgezeichnet", "บันทึกตั้งแต่วันที่เริ่มใช้เวอร์ชันนี้")
     }
     public var githubDailyNote: String {
-        L("Each bar: share of the monthly allowance used that day (UTC dates)", "1本＝その日に使った月の枠の割合（日付はUTC）",
-          "每條：當天用掉的每月額度比例（UTC 日期）", "每条：当天用掉的每月额度比例（UTC 日期）",
-          "막대 1개 = 그날 사용한 월 한도의 비율 (UTC 기준 날짜)", "Chaque barre : part de l’allocation mensuelle utilisée ce jour-là (dates UTC)",
-          "Jeder Balken: an diesem Tag genutzter Anteil des Monatskontingents (UTC-Daten)", "แต่ละแท่ง = สัดส่วนของโควตารายเดือนที่ใช้ในวันนั้น (วันที่ตาม UTC)")
+        L("Dates are UTC", "日付はUTC", "日期為 UTC", "日期为 UTC", "날짜는 UTC 기준", "Dates en UTC", "Daten in UTC", "วันที่ตาม UTC")
     }
     public var loading: String { L("Loading…", "読み込み中…", "載入中…", "加载中…", "불러오는 중…", "Chargement…", "Wird geladen…", "กำลังโหลด…") }
     public var previousWeek: String { L("Previous week", "前の週", "上一週", "上一周", "이전 주", "Semaine précédente", "Vorherige Woche", "สัปดาห์ก่อน") }

@@ -53,6 +53,13 @@ public struct DailyUsageLog: Codable, Equatable, Sendable {
         }
     }
 
+    /// Bar label: "12%", "<1%" for small use, nothing for zero (a baseline shows it).
+    public static func barLabel(_ percent: Double) -> String {
+        if percent <= 0 { return "" }
+        if percent < 1 { return "<1%" }
+        return "\(Int(percent.rounded()))%"
+    }
+
     /// The earliest day with data, for limiting how far back the chart can go.
     public var firstDay: String? { ([since].compactMap { $0 } + days.keys).min() }
 
