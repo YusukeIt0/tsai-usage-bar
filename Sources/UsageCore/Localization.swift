@@ -159,6 +159,33 @@ public struct Strings: Sendable {
         L("Dates are UTC", "日付はUTC", "日期為 UTC", "日期为 UTC", "날짜는 UTC 기준", "Dates en UTC", "Daten in UTC", "วันที่ตาม UTC")
     }
     public var loading: String { L("Loading…", "読み込み中…", "載入中…", "加载中…", "불러오는 중…", "Chargement…", "Wird geladen…", "กำลังโหลด…") }
+    // Codex limit-reset credits
+    public func resetCreditsLine(_ count: Int) -> String {
+        fill(L("Limit resets: %1 left", "上限のリセット：残り%1回", "額度重置：剩餘 %1 次", "额度重置：剩余 %1 次",
+               "한도 초기화: %1회 남음", "Réinitialisations de limite : %1 restante(s)", "Limit-Zurücksetzungen: %1 übrig",
+               "รีเซ็ตขีดจำกัด: เหลือ %1 ครั้ง"), String(count))
+    }
+    public func resetCreditsExpiry(_ date: String) -> String {
+        fill(L("Earliest expiry: %1", "最短の期限：%1", "最早到期：%1", "最早到期：%1", "가장 빠른 만료: %1",
+               "Première expiration : %1", "Frühester Ablauf: %1", "หมดอายุเร็วสุด: %1"), date)
+    }
+    public func resetCreditArrived(_ remaining: Int) -> String {
+        fill(L("A limit reset arrived (%1 left)", "上限のリセットが届きました（残り%1回）", "收到額度重置（剩餘 %1 次）",
+               "收到额度重置（剩余 %1 次）", "한도 초기화가 도착했습니다 (%1회 남음)", "Une réinitialisation de limite est arrivée (%1 restante(s))",
+               "Eine Limit-Zurücksetzung ist eingetroffen (%1 übrig)", "ได้รับการรีเซ็ตขีดจำกัดแล้ว (เหลือ %1 ครั้ง)"), String(remaining))
+    }
+    public var notifyResetCredits: String {
+        L("Notify when a limit reset arrives", "上限のリセットが届いたら通知", "收到額度重置時通知", "收到额度重置时通知",
+          "한도 초기화가 도착하면 알림", "Notifier à l’arrivée d’une réinitialisation de limite",
+          "Benachrichtigen, wenn eine Limit-Zurücksetzung eintrifft", "แจ้งเตือนเมื่อได้รับการรีเซ็ตขีดจำกัด")
+    }
+    public var notificationsDenied: String {
+        L("Notifications are not allowed", "通知が許可されていません", "未允許通知", "未允许通知",
+          "알림이 허용되지 않음", "Notifications non autorisées", "Mitteilungen sind nicht erlaubt", "ไม่ได้อนุญาตการแจ้งเตือน")
+    }
+    public var openSystemSettings: String {
+        L("Open Settings", "設定を開く", "打開設定", "打开设置", "설정 열기", "Ouvrir les réglages", "Einstellungen öffnen", "เปิดการตั้งค่า")
+    }
     public var previousWeek: String { L("Previous week", "前の週", "上一週", "上一周", "이전 주", "Semaine précédente", "Vorherige Woche", "สัปดาห์ก่อน") }
     public var nextWeek: String { L("Next week", "次の週", "下一週", "下一周", "다음 주", "Semaine suivante", "Nächste Woche", "สัปดาห์ถัดไป") }
     public var notOffered: String {

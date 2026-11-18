@@ -10,6 +10,10 @@ MainActor.assumeIsolated {
         UIPreview.run(outputDir: args[i + 1])
         exit(0)
     }
+    // Developer aids for checking notification permission across builds.
+    if args.contains("--notification-test") || args.contains("--notification-status") {
+        NotificationCheck.run(post: args.contains("--notification-test"))
+    }
     let app = NSApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate

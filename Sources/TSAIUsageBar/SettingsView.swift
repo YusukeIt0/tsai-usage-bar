@@ -6,6 +6,7 @@ struct SettingsView: View {
     @ObservedObject var model: UsageModel
     @ObservedObject var settings: AppSettings
     @ObservedObject var updates: UpdateChecker
+    @ObservedObject var notifier: Notifier
     @State private var linkError: String?
     @State private var launchAtLogin = false
     @State private var budgetText = ""
@@ -47,6 +48,7 @@ struct SettingsView: View {
 
             Section(s.connections) {
                 codexRow
+                resetCreditNotifyRow
                 claudeRow
                 githubRow
                 if let linkError {
@@ -132,6 +134,27 @@ struct SettingsView: View {
             }
             }
         }
+    }
+
+    /// Codex reset-credit notifications. Asks macOS for permission when turned on.
+    private var resetCreditNotifyRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(s.notifyResetCredits, isOn: Binding(
+                get: { settings.notifyResetCredits },
+                set: { on in
+                    settings.notifyResetCredits = on
+                    if on, notifier.permission != .allowed { notifier.requestPermission() }
+                }))
+                .font(.caption)
+            if settings.notifyResetCredits, notifier.permission == .denied {
+                HStack {
+                    Text(s.notificationsDenied).font(.caption).foregroundStyle(.orange)
+                    Spacer()
+                    Button(s.openSystemSettings) { notifier.openSystemSettings() }.controlSize(.small)
+                }
+            }
+        }
+        .onAppear { notifier.refreshPermission() }
     }
 
     private var claudeRow: some View {

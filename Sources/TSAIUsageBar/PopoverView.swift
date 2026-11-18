@@ -39,6 +39,18 @@ struct PopoverView: View {
                 }
             }
 
+            if provider == .codex, let credits = status.snapshot?.resetCredits, credits.available > 0 {
+                Divider()
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(s.resetCreditsLine(credits.available), systemImage: "ticket")
+                        .font(.caption.weight(.semibold))
+                    if let expiry = credits.earliestExpiry {
+                        Text(s.resetCreditsExpiry(TimeText(settings.appLanguage).reset(expiry, now: model.now)))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             if provider != .github, status.snapshot?.offers(.sevenDay) != false {
                 Divider()
                 DailyChart(title: s.dailyWeeklyTitle, note: nil, emptyText: s.dailyNoData, strings: s,

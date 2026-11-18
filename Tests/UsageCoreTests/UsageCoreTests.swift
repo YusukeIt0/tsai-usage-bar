@@ -607,3 +607,40 @@ final class JSONNumberTests: XCTestCase {
         XCTAssertTrue(try ClaudeStatusLineParser.parseWindows(Data(json.utf8)).isEmpty)
     }
 }
+
+final class ResetCreditsTests: XCTestCase {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let weekly: [String: Any] = ["limitId": "codex", "primary": ["usedPercent": 10, "windowDurationMins": 10080, "resetsAt": 1_800_500_000]]
+
+    func testParsesCountAndEarliestAvailableExpiry() throws {
+        let result: [String: Any] = ["rateLimits": weekly, "rateLimitResetCredits": [
+            "availableCount": 2,
+            "credits": [
+                ["id": "a", "resetType": "codexRateLimits", "status": "available", "grantedAt": 1, "expiresAt": 1_802_000_000],
+                ["id": "b", "resetType": "codexRateLimits", "status": "available", "grantedAt": 1, "expiresAt": 1_801_000_000],
+                ["id": "c", "resetType": "codexRateLimits", "status": "redeemed", "grantedAt": 1, "expiresAt": 1_800_100_000],
+            ]]]
+        let snap = try CodexRateLimitParser.parse(result: result, fetchedAt: now)
+        XCTAssertEqual(snap.resetCredits, ResetCredits(available: 2, earliestExpiry: Date(timeIntervalSince1970: 1_801_000_000)))
+    }
+
+    func testCountOnlyAndMissing() throws {
+        let countOnly: [String: Any] = ["rateLimits": weekly, "rateLimitResetCredits": ["availableCount": 0, "credits": NSNull()]]
+        XCTAssertEqual(try CodexRateLimitParser.parse(result: countOnly, fetchedAt: now).resetCredits, ResetCredits(available: 0, earliestExpiry: nil))
+        XCTAssertNil(try CodexRateLimitParser.parse(result: ["rateLimits": weekly], fetchedAt: now).resetCredits)
+    }
+
+    func testArrivalDetection() {
+        XCTAssertNil(ResetCredits.arrived(previous: nil, current: 3))   // first value: baseline only
+        XCTAssertNil(ResetCredits.arrived(previous: 2, current: 2))
+        XCTAssertNil(ResetCredits.arrived(previous: 2, current: 1))     // used one
+        XCTAssertEqual(ResetCredits.arrived(previous: 1, current: 2), 1)
+        XCTAssertEqual(ResetCredits.arrived(previous: 0, current: 3), 3)
+    }
+
+    func testCountOnlyReadKeepsKnownExpiry() {
+        let detailed = ResetCredits(available: 2, earliestExpiry: now)
+        XCTAssertEqual(ResetCredits(available: 2, earliestExpiry: nil).keepingExpiry(from: detailed), detailed)
+        XCTAssertNil(ResetCredits(available: 1, earliestExpiry: nil).keepingExpiry(from: detailed).earliestExpiry) // count changed
+    }
+}
