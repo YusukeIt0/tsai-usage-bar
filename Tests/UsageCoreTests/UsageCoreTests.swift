@@ -544,6 +544,15 @@ final class DailyUsageTests: XCTestCase {
         XCTAssertEqual(log.firstDay, "2026-11-16")
     }
 
+    func testBarLabelsShowPercent() {
+        XCTAssertEqual(DailyUsageLog.barLabel(0), "")
+        XCTAssertEqual(DailyUsageLog.barLabel(0.3), "<1%")
+        XCTAssertEqual(DailyUsageLog.barLabel(0.99), "<1%")
+        XCTAssertEqual(DailyUsageLog.barLabel(1), "1%")
+        XCTAssertEqual(DailyUsageLog.barLabel(17.6), "18%")
+        XCTAssertEqual(DailyUsageLog.barLabel(100), "100%")
+    }
+
     func testOldDaysArePruned() {
         var log = DailyUsageLog(days: ["2026-01-01": 4], last: UsageWindow(usedPercent: 1, resetsAt: at("2026-11-21T03:00:00Z")), since: "2026-01-01")
         log.record(UsageWindow(usedPercent: 2, resetsAt: at("2026-11-21T03:00:00Z")), at: at("2026-11-18T03:00:00Z"), calendar: cal)

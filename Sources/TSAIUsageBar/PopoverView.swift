@@ -26,7 +26,7 @@ struct PopoverView: View {
 
             if provider == .github, model.githubLogin != nil {
                 Divider()
-                DailyChart(title: s.dailyUsageTitle, note: s.githubDailyNote,
+                DailyChart(title: s.dailyMonthlyTitle, note: s.githubDailyNote,
                            emptyText: model.githubDailyFailed && !model.githubDailyLoading ? s.fetchFailed : s.loading,
                            strings: s, lang: settings.appLanguage, now: model.now) { end in
                     DailyChart.days(endingAt: end).map { d in
@@ -41,7 +41,7 @@ struct PopoverView: View {
 
             if provider != .github, status.snapshot?.offers(.sevenDay) != false {
                 Divider()
-                DailyChart(title: s.dailyUsageTitle, note: s.dailyUsageNote, emptyText: s.dailyNoData, strings: s,
+                DailyChart(title: s.dailyWeeklyTitle, note: nil, emptyText: s.dailyNoData, strings: s,
                            lang: settings.appLanguage, now: model.now) { end in
                     (model.daily[provider] ?? DailyUsageLog()).values(endingAt: end)
                 } earliest: {
@@ -268,7 +268,7 @@ enum USDText {
 /// Days without data are drawn as an empty outline, never as zero.
 struct DailyChart: View {
     let title: String
-    let note: String
+    let note: String?
     let emptyText: String
     let strings: Strings
     let lang: AppLanguage
@@ -308,7 +308,7 @@ struct DailyChart: View {
             HStack(alignment: .bottom, spacing: 6) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                     VStack(spacing: 3) {
-                        Text(row.percent.map { $0 >= 0.5 ? "\(Int($0.rounded()))" : "" } ?? "")
+                        Text(row.percent.map(DailyUsageLog.barLabel) ?? "")
                             .font(.system(size: 9).monospacedDigit())
                             .foregroundStyle(.secondary)
                             .frame(height: 11)
@@ -332,8 +332,9 @@ struct DailyChart: View {
                     .help(row.percent.map { "\(dayText(row.day)): \(String(format: "%.1f", $0))%" } ?? dayText(row.day))
                 }
             }
-            Text(rows.allSatisfy({ $0.percent == nil }) ? emptyText : note)
-                .font(.caption2).foregroundStyle(.secondary)
+            if let text = rows.allSatisfy({ $0.percent == nil }) ? emptyText : note {
+                Text(text).font(.caption2).foregroundStyle(.secondary)
+            }
         }
         .task(id: weeksBack) { onShow?(Self.days(endingAt: end)) }
     }
