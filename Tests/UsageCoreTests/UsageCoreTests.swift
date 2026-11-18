@@ -585,3 +585,25 @@ final class GitHubDailyCacheTests: XCTestCase {
         XCTAssertEqual(GitHubDailyCache.utcKey(at("2026-11-18T23:30:00Z")), "2026-11-18")
     }
 }
+
+final class JSONNumberTests: XCTestCase {
+    /// Regression: values of exactly 0 and 1 from real JSON were read as booleans and dropped.
+    func testZeroAndOnePercentFromRealJSONAreRead() throws {
+        let claude = #"{"rate_limits":{"five_hour":{"used_percentage":0,"resets_at":1900000000},"seven_day":{"used_percentage":1,"resets_at":1900500000}}}"#
+        let w = try ClaudeStatusLineParser.parseWindows(Data(claude.utf8))
+        XCTAssertEqual(w[.fiveHour]?.usedPercent, 0)
+        XCTAssertEqual(w[.sevenDay]?.usedPercent, 1)
+
+        let codex = #"{"rateLimits":{"limitId":"codex","primary":{"usedPercent":0,"windowDurationMins":300,"resetsAt":1900000000},"secondary":{"usedPercent":1,"windowDurationMins":10080,"resetsAt":1900500000}}}"#
+        let result = try JSONSerialization.jsonObject(with: Data(codex.utf8)) as! [String: Any]
+        let snap = try CodexRateLimitParser.parse(result: result, fetchedAt: Date())
+        XCTAssertEqual(snap[.fiveHour]?.usedPercent, 0)
+        XCTAssertEqual(snap[.sevenDay]?.usedPercent, 1)
+        XCTAssertTrue(snap.offers(.fiveHour))
+    }
+
+    func testRealBooleansAreStillRejected() throws {
+        let json = #"{"rate_limits":{"five_hour":{"used_percentage":true,"resets_at":1900000000}}}"#
+        XCTAssertTrue(try ClaudeStatusLineParser.parseWindows(Data(json.utf8)).isEmpty)
+    }
+}

@@ -73,7 +73,9 @@ public enum ClaudeStatusLineParser {
 
 func doubleValue(_ any: Any?) -> Double? {
     switch any {
-    case let n as NSNumber where !(n is Bool) && CFGetTypeID(n) != CFBooleanGetTypeID():
+    // Only real JSON booleans are rejected. `is Bool` must not be used: Foundation bridges
+    // the numbers 0 and 1 to Bool, so it would drop 0 % and 1 % values.
+    case let n as NSNumber where CFGetTypeID(n) != CFBooleanGetTypeID():
         let d = n.doubleValue
         return d.isFinite ? d : nil
     case let s as String:
