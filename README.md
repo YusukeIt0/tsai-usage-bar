@@ -1,4 +1,4 @@
-# TSAI UsageBar
+# <img src="Resources/icon/AppIcon-1024.png" alt="" width="40" align="top"> TSAI UsageBar
 
 A lightweight macOS menu bar app that shows how much of your **Claude Code** and **Codex** usage limits is left and when they reset, plus your **GitHub Actions** free usage for private repositories.
 
@@ -33,6 +33,7 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 - **Daily usage**: below the windows, a chart shows the last 7 days, one bar per day; ◀ ▶ step through earlier weeks.
   - Claude Code and Codex: the share of the 7-day limit used each day. These services report only current percentages, so the app records the daily increase locally, starting when you install this version (about 120 days are kept). Days before that show as empty outlines.
   - GitHub Actions: the share of the monthly allowance that private repositories used each day, from GitHub's official per-day billing data, so earlier days are available too (UTC dates).
+- Codex **limit resets** (reset credits): when you have any, the Codex panel shows how many are left and the earliest expiry. Optionally, a macOS notification tells you when a new one arrives (Settings → **Notify when a limit reset arrives**, off by default). Claude Code's data doesn't include this, so it's Codex only.
 - Windows your plan doesn't have (for example, plans without a 5-hour limit) are hidden automatically.
 - Values are never guessed. Reaching a reset time doesn't turn a value into 100%; the app waits for the next official value.
 - Languages: English, 日本語, 繁體中文, 简体中文, 한국어, Français, Deutsch and ไทย. Automatic picks the first supported macOS language (otherwise English), or choose one in Settings.
@@ -61,7 +62,7 @@ curl -fsSL https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/main/insta
 
 ## Connect
 
-**Codex** works automatically if you've signed in to the Codex CLI. If not, the app offers **Sign in to Codex in browser**, the official Codex sign-in.
+**Codex** works automatically if you've signed in to the Codex CLI. If not, the app offers **Sign in to Codex in browser**, the official Codex sign-in. Limit-reset credits come from the same official read (`rateLimitResetCredits`); their expiry details are read only while a panel is open. Turning on reset notifications asks macOS for notification permission once; it is kept across updates.
 
 **Claude Code** sends usage limits to its official `statusLine` command. Open Settings → **Connect**. After you confirm, the app:
 
