@@ -29,6 +29,8 @@ final class UsageModel: ObservableObject {
     @Published private(set) var claudeAuth: ClaudeAuth.Status = .unknown
     @Published private(set) var codexSigningIn = false
     @Published private(set) var github = ProviderStatus()
+    /// Per-day usage of the 7-day window, recorded by the app (Codex) or the relay (Claude).
+    @Published private(set) var daily: [Provider: DailyUsageLog] = [:]
     @Published private(set) var githubError: GitHubError?
     @Published private(set) var githubLogin: String? = GitHubAuth.load()?.login
     /// Shown while connecting: the code the person enters in the browser.
@@ -65,6 +67,8 @@ final class UsageModel: ObservableObject {
         claude.snapshot = SnapshotStore.load(paths.snapshotURL(.claude))
         codex.snapshot = SnapshotStore.load(paths.snapshotURL(.codex))
         github.snapshot = SnapshotStore.load(paths.snapshotURL(.github))
+        daily[.claude] = DailyUsageStore.load(.claude, paths: paths)
+        daily[.codex] = DailyUsageStore.load(.codex, paths: paths)
     }
 
     func start() {
@@ -199,6 +203,8 @@ final class UsageModel: ObservableObject {
             codex.consecutiveFailures = 0
             try? paths.ensureDirectory()
             try? SnapshotStore.save(snap, to: paths.snapshotURL(.codex))
+            DailyUsageStore.record(snap[.sevenDay], for: .codex, paths: paths)
+            daily[.codex] = DailyUsageStore.load(.codex, paths: paths)
             onSnapshotArrived?(.codex, snap)
         case .failure(let e):
             codex.lastError = e
@@ -350,6 +356,8 @@ final class UsageModel: ObservableObject {
 
     func reloadClaude() {
         guard isActive(.claude) else { return }
+        let log = DailyUsageStore.load(.claude, paths: paths)
+        if daily[.claude] != log { daily[.claude] = log }
         let snap = SnapshotStore.load(paths.snapshotURL(.claude))
         guard snap != claude.snapshot else { return }
         claude.snapshot = snap

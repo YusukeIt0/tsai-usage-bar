@@ -497,3 +497,57 @@ final class GitHubBudgetTests: XCTestCase {
         XCTAssertNil(decoded.usedAmount)
     }
 }
+
+final class DailyUsageTests: XCTestCase {
+    var cal: Calendar = { var c = Calendar(identifier: .gregorian); c.timeZone = TimeZone(identifier: "Asia/Bangkok")!; return c }()
+    func at(_ s: String) -> Date { ISO8601DateFormatter().date(from: s)! }
+
+    func testRecordsIncreasesPerLocalDay() {
+        var log = DailyUsageLog()
+        let reset = at("2026-11-21T03:00:00Z")
+        log.record(UsageWindow(usedPercent: 40, resetsAt: reset), at: at("2026-11-17T02:00:00Z"), calendar: cal) // baseline
+        log.record(UsageWindow(usedPercent: 45, resetsAt: reset), at: at("2026-11-17T05:00:00Z"), calendar: cal)
+        log.record(UsageWindow(usedPercent: 52, resetsAt: reset), at: at("2026-11-17T16:30:00Z"), calendar: cal) // 23:30 local
+        log.record(UsageWindow(usedPercent: 60, resetsAt: reset), at: at("2026-11-17T17:30:00Z"), calendar: cal) // 00:30 next day
+        XCTAssertEqual(log.days["2026-11-17"], 12)
+        XCTAssertEqual(log.days["2026-11-18"], 8)
+        XCTAssertEqual(log.since, "2026-11-17")
+    }
+
+    func testNewWindowCountsItsWholeValue() {
+        var log = DailyUsageLog()
+        log.record(UsageWindow(usedPercent: 90, resetsAt: at("2026-11-21T03:00:00Z")), at: at("2026-11-20T01:00:00Z"), calendar: cal)
+        log.record(UsageWindow(usedPercent: 3, resetsAt: at("2026-11-28T05:00:00Z")), at: at("2026-11-21T06:00:00Z"), calendar: cal)
+        XCTAssertEqual(log.days["2026-11-21"], 3)
+    }
+
+    func testDecreaseOrSameValueAddsNothing() {
+        var log = DailyUsageLog()
+        let reset = at("2026-11-21T03:00:00Z")
+        log.record(UsageWindow(usedPercent: 50, resetsAt: reset), at: at("2026-11-18T01:00:00Z"), calendar: cal)
+        log.record(UsageWindow(usedPercent: 50, resetsAt: reset.addingTimeInterval(30)), at: at("2026-11-18T02:00:00Z"), calendar: cal)
+        log.record(UsageWindow(usedPercent: 48, resetsAt: reset), at: at("2026-11-18T03:00:00Z"), calendar: cal)
+        XCTAssertNil(log.days["2026-11-18"])
+    }
+
+    func testDaysBeforeRecordingAreNoDataNotZero() {
+        var log = DailyUsageLog()
+        let reset = at("2026-11-21T03:00:00Z")
+        log.record(UsageWindow(usedPercent: 10, resetsAt: reset), at: at("2026-11-16T03:00:00Z"), calendar: cal)
+        log.record(UsageWindow(usedPercent: 15, resetsAt: reset), at: at("2026-11-18T03:00:00Z"), calendar: cal)
+        let v = log.values(endingAt: at("2026-11-18T10:00:00Z"), count: 7, calendar: cal)
+        XCTAssertEqual(v.count, 7)
+        XCTAssertNil(v[0].percent)            // 11-12: before recording
+        XCTAssertEqual(v[4].percent, 0)       // 11-16: recording started, nothing used
+        XCTAssertEqual(v[5].percent, 0)       // 11-17
+        XCTAssertEqual(v[6].percent, 5)       // 11-18
+        XCTAssertEqual(log.firstDay, "2026-11-16")
+    }
+
+    func testOldDaysArePruned() {
+        var log = DailyUsageLog(days: ["2026-01-01": 4], last: UsageWindow(usedPercent: 1, resetsAt: at("2026-11-21T03:00:00Z")), since: "2026-01-01")
+        log.record(UsageWindow(usedPercent: 2, resetsAt: at("2026-11-21T03:00:00Z")), at: at("2026-11-18T03:00:00Z"), calendar: cal)
+        XCTAssertNil(log.days["2026-01-01"])
+        XCTAssertEqual(log.days["2026-11-18"], 1)
+    }
+}

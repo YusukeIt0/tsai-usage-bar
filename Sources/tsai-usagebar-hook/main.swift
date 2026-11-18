@@ -16,6 +16,10 @@ let args = CommandLine.arguments.dropFirst()
 func storeClaudeLimits(from input: Data) {
     if FileManager.default.fileExists(atPath: paths.claudePausedURL.path) { return }
     guard let windows = try? ClaudeStatusLineParser.parseWindows(input), !windows.isEmpty else { return }
+    // Daily history of the 7-day window (a cached copy past its reset is not new usage).
+    if let week = windows[.sevenDay], (week.resetsAt ?? .distantFuture) > Date() {
+        DailyUsageStore.record(week, for: .claude, paths: paths)
+    }
     let url = paths.snapshotURL(.claude)
     let existing = SnapshotStore.load(url)
     let merged = SnapshotStore.merge(windows, into: existing, at: Date())
