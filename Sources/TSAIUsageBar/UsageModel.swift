@@ -34,6 +34,13 @@ final class UsageModel: ObservableObject {
     /// Shown while connecting: the code the person enters in the browser.
     @Published private(set) var githubDeviceCode: String?
     @Published private(set) var githubConnectError: GitHubAuth.AuthError?
+    /// Monthly Actions budget from Settings; changes the GitHub percent without refetching.
+    @Published var githubBudgetUSD: Double? {
+        didSet {
+            // Values saved by 0.1.6 have no amounts; read again so the budget can apply.
+            if githubBudgetUSD != nil, github.snapshot?.windows[.month]?.usedAmount == nil { refreshGitHub(force: true) }
+        }
+    }
     private var githubTimer: Timer?
     private var githubConnectTask: Task<Void, Never>?
     /// Billing data lags by hours, so an hourly read is enough.
@@ -106,8 +113,13 @@ final class UsageModel: ObservableObject {
     }
 
     func display(_ id: ItemID) -> WindowDisplay {
+        var snapshot = status(id.provider).snapshot
+        if id.provider == .github, var s = snapshot, let w = s.windows[.month] {
+            s.windows[.month] = GitHubActionsUsage.applyingBudget(w, budgetUSD: githubBudgetUSD)
+            snapshot = s
+        }
         // Only Claude Code returns to full after a reset (owner decision, 2026-11-18).
-        WindowDisplay.evaluate(status(id.provider).snapshot, id.window, now: now, fullAfterReset: id.provider == .claude)
+        return WindowDisplay.evaluate(snapshot, id.window, now: now, fullAfterReset: id.provider == .claude)
     }
 
     /// True when the last Codex attempt failed and the shown values are older.

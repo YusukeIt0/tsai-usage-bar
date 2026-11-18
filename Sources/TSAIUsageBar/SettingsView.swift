@@ -8,6 +8,7 @@ struct SettingsView: View {
     @ObservedObject var updates: UpdateChecker
     @State private var linkError: String?
     @State private var launchAtLogin = false
+    @State private var budgetText = ""
 
     private var s: Strings { settings.strings }
 
@@ -84,6 +85,7 @@ struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             launchAtLogin = settings.launchAtLogin
+            budgetText = settings.githubBudgetUSD.map { USDText.format($0).replacingOccurrences(of: "$", with: "") } ?? ""
             model.refreshClaudeLink()
             Task { await model.refreshClaudeAuth() }
         }
@@ -184,7 +186,30 @@ struct SettingsView: View {
             } else if model.githubConnectError != nil {
                 Text(s.linkFailed).font(.caption).foregroundStyle(.orange)
             }
+            if model.githubLogin != nil {
+                HStack {
+                    Text(s.monthlyBudget).font(.caption)
+                    Spacer()
+                    Text("$").foregroundStyle(.secondary)
+                    TextField("", text: $budgetText, prompt: Text("0"))
+                        .labelsHidden()
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 70)
+                        .onSubmit { applyBudget() }
+                        .onChange(of: budgetText) { _, _ in applyBudget() }
+                }
+                Text(s.budgetHelp).font(.caption2).foregroundStyle(.secondary)
+            }
         }
+    }
+
+    /// Empty or zero means no budget. Only plain numbers up to 100,000 USD are accepted.
+    private func applyBudget() {
+        let t = budgetText.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: "")
+        if t.isEmpty { settings.githubBudgetUSD = nil; return }
+        guard let v = Double(t), v.isFinite, v >= 0, v <= 100_000 else { return }
+        settings.githubBudgetUSD = v > 0 ? v : nil
     }
 
     private func confirmLink() {
