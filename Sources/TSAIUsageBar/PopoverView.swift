@@ -43,7 +43,7 @@ struct PopoverView: View {
         let offered = status.snapshot?.offers(kind) ?? true
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(kind == .month ? s.privateFreeQuota : s.windowTitle(kind)).font(.subheadline.weight(.semibold))
+                Text(kind == .month ? monthTitle : s.windowTitle(kind)).font(.subheadline.weight(.semibold))
                 Spacer()
                 if let p = display.percent(mode: settings.displayMode) {
                     Text("\(p)%").font(.subheadline.monospacedDigit().weight(.semibold))
@@ -77,6 +77,12 @@ struct PopoverView: View {
         let remaining = date.timeIntervalSince(model.now)
         return s.resetLine(tt.reset(date, now: model.now),
                            remaining: tt.duration(remaining))
+    }
+
+    /// "Free usage (private repos)", or with the budget the person entered.
+    private var monthTitle: String {
+        guard let budget = model.githubBudgetUSD else { return s.privateFreeQuota }
+        return s.privateFreeQuotaWithBudget(USDText.format(budget))
     }
 
     // MARK: Notices
@@ -130,7 +136,8 @@ struct PopoverView: View {
     private var githubNotice: some View {
         VStack(alignment: .leading, spacing: 6) {
             if case .value(let used, _) = model.display(ItemID(.github, .month)), used >= 100 {
-                Label(s.freeQuotaUsedUp, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.orange)
+                Label(model.githubBudgetUSD == nil ? s.freeQuotaUsedUp : s.budgetUsedUp, systemImage: "exclamationmark.circle")
+                    .font(.caption).foregroundStyle(.orange)
             }
             switch model.githubError {
             case .some(.notConnected):
@@ -217,5 +224,16 @@ struct UpdateRow: View {
         if updates.installState == .failed {
             Text(strings.updateFailed).font(.caption).foregroundStyle(.orange)
         }
+    }
+}
+
+/// Short dollar amounts such as "$10" or "$12.5".
+enum USDText {
+    static func format(_ value: Double) -> String {
+        let f = NumberFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.minimumFractionDigits = 0
+        f.maximumFractionDigits = 2
+        return "$" + (f.string(from: NSNumber(value: value)) ?? String(value))
     }
 }

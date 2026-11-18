@@ -471,3 +471,29 @@ final class ClaudeWindowAfterResetTests: XCTestCase {
         XCTAssertFalse(gone.offers(.fiveHour))
     }
 }
+
+final class GitHubBudgetTests: XCTestCase {
+    func testBudgetExtendsTheLimit() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let w = try GitHubActionsUsage.window(plan: "pro", total: [.init(sku: "actions_linux", grossAmount: 21.45)],
+                                              publicRepos: [], now: now)
+        XCTAssertEqual(w.usedPercent, 100)         // 21.45 of the 18 USD included
+        XCTAssertEqual(w.usedAmount, 21.45)
+        XCTAssertEqual(w.includedAmount, 18)
+        let withBudget = GitHubActionsUsage.applyingBudget(w, budgetUSD: 10)
+        XCTAssertEqual(withBudget.usedPercent, 21.45 / 28 * 100, accuracy: 0.001) // ~77% of 18 + 10
+        XCTAssertEqual(WindowDisplay.value(usedPercent: withBudget.usedPercent, resetsAt: nil).label(.month, mode: .remaining), "M23%")
+        XCTAssertEqual(GitHubActionsUsage.applyingBudget(w, budgetUSD: 1).usedPercent, 100) // capped
+        XCTAssertEqual(GitHubActionsUsage.applyingBudget(w, budgetUSD: nil), w)
+        XCTAssertEqual(GitHubActionsUsage.applyingBudget(w, budgetUSD: 0), w)
+    }
+
+    func testOlderSnapshotsWithoutAmountsAreUnchanged() throws {
+        // Snapshots saved by 0.1.6 have no amounts; the budget cannot be applied to them.
+        let old = UsageWindow(usedPercent: 40, resetsAt: nil)
+        XCTAssertEqual(GitHubActionsUsage.applyingBudget(old, budgetUSD: 10), old)
+        let json = #"{"usedPercent":40,"resetsAt":1800000000}"#
+        let decoded = try JSONDecoder().decode(UsageWindow.self, from: Data(json.utf8))
+        XCTAssertNil(decoded.usedAmount)
+    }
+}

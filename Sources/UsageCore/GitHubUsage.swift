@@ -61,6 +61,18 @@ public enum GitHubActionsUsage {
         let publicAmount = publicRepos.joined().reduce(0) { $0 + $1.grossAmount }
         let privateAmount = max(0, totalAmount - publicAmount)
         let used = min(100, privateAmount / included * 100)
-        return UsageWindow(usedPercent: used, resetsAt: period(containing: now).resetsAt)
+        return UsageWindow(usedPercent: used, resetsAt: period(containing: now).resetsAt,
+                           usedAmount: privateAmount, includedAmount: included)
+    }
+
+    /// The same window measured against included usage plus the person's monthly Actions
+    /// budget (entered in Settings; GitHub has no public API for personal budgets).
+    /// Without a positive budget, or without stored amounts, the window is unchanged.
+    public static func applyingBudget(_ window: UsageWindow, budgetUSD: Double?) -> UsageWindow {
+        guard let budget = budgetUSD, budget > 0,
+              let used = window.usedAmount, let included = window.includedAmount else { return window }
+        var w = window
+        w.usedPercent = min(100, max(0, used / (included + budget) * 100))
+        return w
     }
 }

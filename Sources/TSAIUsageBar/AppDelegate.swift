@@ -53,6 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// First data from a provider turns on its 5-hour item, or 7-day when 5-hour is not offered.
     private func applyActiveProviders() {
+        if model.githubBudgetUSD != settings.githubBudgetUSD { model.githubBudgetUSD = settings.githubBudgetUSD }
         model.setActiveProviders(ItemVisibility.activeProviders(enabled: settings.enabledItems,
                                                                 initialized: settings.initializedProviders))
     }

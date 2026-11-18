@@ -18,6 +18,8 @@ final class AppSettings: ObservableObject {
     @Published var language: LanguageSetting { didSet { save() } }
     /// Providers whose default item has been chosen once (H, or W when H is not offered).
     @Published var initializedProviders: Set<Provider> { didSet { save() } }
+    /// Optional monthly GitHub Actions budget in USD, as set on GitHub. Nil = none.
+    @Published var githubBudgetUSD: Double? { didSet { save() } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -27,6 +29,8 @@ final class AppSettings: ObservableObject {
         language = LanguageSetting(storedValue: defaults.string(forKey: "language") ?? "") ?? .automatic
         initializedProviders = Set((defaults.stringArray(forKey: "initializedProviders") ?? [])
             .compactMap(Provider.init(rawValue:)))
+        let budget = defaults.double(forKey: "githubBudgetUSD")
+        githubBudgetUSD = budget > 0 ? budget : nil
     }
 
     var appLanguage: AppLanguage { AppLanguage.resolve(language) }
@@ -38,6 +42,11 @@ final class AppSettings: ObservableObject {
         defaults.set(language.storedValue, forKey: "language")
         defaults.set(Provider.allCases.filter { initializedProviders.contains($0) }.map(\.rawValue),
                      forKey: "initializedProviders")
+        if let githubBudgetUSD, githubBudgetUSD > 0 {
+            defaults.set(githubBudgetUSD, forKey: "githubBudgetUSD")
+        } else {
+            defaults.removeObject(forKey: "githubBudgetUSD")
+        }
     }
 
     // MARK: Launch at login

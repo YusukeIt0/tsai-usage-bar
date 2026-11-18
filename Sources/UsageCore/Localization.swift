@@ -256,6 +256,29 @@ public struct Strings: Sendable {
         L("GitHub's totals can lag by a few hours", "GitHubの集計は数時間遅れることがあります", "GitHub 的統計可能延遲數小時", "GitHub 的统计可能延迟数小时",
           "GitHub 집계는 몇 시간 늦을 수 있음", "Les totaux GitHub peuvent avoir quelques heures de retard", "GitHub-Summen können einige Stunden verzögert sein", "ยอดของ GitHub อาจช้าไม่กี่ชั่วโมง")
     }
+    public func privateFreeQuotaWithBudget(_ amount: String) -> String {
+        fill(L("Free usage + %1 budget (private repos)", "無料枠＋予算%1（非公開リポジトリ）", "免費額度＋預算 %1（私人存放庫）",
+               "免费额度＋预算 %1（私有仓库）", "무료 사용량 + 예산 %1 (비공개 저장소)", "Utilisation gratuite + budget de %1 (dépôts privés)",
+               "Kostenloses Kontingent + Budget %1 (private Repos)", "โควตาฟรี + งบ %1 (รีโพส่วนตัว)"), amount)
+    }
+    public var budgetUsedUp: String {
+        L("Free usage and budget are used up", "無料枠と予算を使い切りました", "免費額度與預算已用完", "免费额度和预算已用完",
+          "무료 사용량과 예산을 모두 사용함", "Utilisation gratuite et budget épuisés", "Kostenloses Kontingent und Budget aufgebraucht",
+          "ใช้โควตาฟรีและงบหมดแล้ว")
+    }
+    public var monthlyBudget: String {
+        L("Monthly Actions budget (optional)", "Actionsの月の予算（任意）", "Actions 每月預算（選填）", "Actions 每月预算（可选）",
+          "Actions 월 예산 (선택)", "Budget mensuel Actions (facultatif)", "Monatliches Actions-Budget (optional)", "งบ Actions รายเดือน (ไม่บังคับ)")
+    }
+    public var budgetHelp: String {
+        L("Same amount as your Actions budget on GitHub. Leave empty if you have none.",
+          "GitHubで設定したActionsの予算と同じ額。設定していなければ空欄のまま。",
+          "與你在 GitHub 設定的 Actions 預算相同。未設定則留空。", "与你在 GitHub 设置的 Actions 预算相同。未设置则留空。",
+          "GitHub에서 설정한 Actions 예산과 같은 금액. 없으면 비워 두세요.",
+          "Même montant que votre budget Actions sur GitHub. Laissez vide si vous n’en avez pas.",
+          "Gleicher Betrag wie das Actions-Budget auf GitHub. Leer lassen, wenn keines festgelegt ist.",
+          "จำนวนเดียวกับงบ Actions ที่ตั้งไว้ใน GitHub เว้นว่างไว้หากไม่ได้ตั้ง")
+    }
     public var freeQuotaUsedUp: String {
         L("Free usage is used up", "無料枠を使い切りました", "免費額度已用完", "免费额度已用完",
           "무료 사용량을 모두 사용함", "Utilisation gratuite épuisée", "Kostenloses Kontingent aufgebraucht", "ใช้โควตาฟรีหมดแล้ว")

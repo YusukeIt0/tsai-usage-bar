@@ -69,11 +69,18 @@ public struct UsageWindow: Codable, Equatable, Sendable {
     public var resetsAt: Date?
     /// When this window's value was received. Nil means the snapshot's `fetchedAt`.
     public var observedAt: Date?
+    /// For amount-based windows (GitHub Actions, USD): amount used and the included amount.
+    /// Kept so the percent can be recomputed when the person changes their budget.
+    public var usedAmount: Double?
+    public var includedAmount: Double?
 
-    public init(usedPercent: Double, resetsAt: Date?, observedAt: Date? = nil) {
+    public init(usedPercent: Double, resetsAt: Date?, observedAt: Date? = nil,
+                usedAmount: Double? = nil, includedAmount: Double? = nil) {
         self.usedPercent = usedPercent
         self.resetsAt = resetsAt
         self.observedAt = observedAt
+        self.usedAmount = usedAmount
+        self.includedAmount = includedAmount
     }
 }
 
