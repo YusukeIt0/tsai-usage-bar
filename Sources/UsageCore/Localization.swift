@@ -141,6 +141,21 @@ public struct Strings: Sendable {
           "초기화됨 · 다음 사용 시 새 기간 시작", "Réinitialisé · une nouvelle période démarre à la prochaine utilisation",
           "Zurückgesetzt · neues Zeitfenster beginnt bei nächster Nutzung", "รีเซ็ตแล้ว · ช่วงใหม่จะเริ่มเมื่อใช้งานครั้งถัดไป")
     }
+    public var dailyUsageTitle: String {
+        L("Daily usage", "日別の使用量", "每日用量", "每日用量", "일별 사용량", "Utilisation quotidienne", "Tägliche Nutzung", "การใช้งานรายวัน")
+    }
+    public var dailyUsageNote: String {
+        L("Each bar: share of the 7-day limit used that day", "1本＝その日に使った7日間枠の割合", "每條：當天用掉的 7 天上限比例",
+          "每条：当天用掉的 7 天上限比例", "막대 1개 = 그날 사용한 7일 한도의 비율", "Chaque barre : part de la limite sur 7 jours utilisée ce jour-là",
+          "Jeder Balken: an diesem Tag genutzter Anteil des 7-Tage-Limits", "แต่ละแท่ง = สัดส่วนของขีดจำกัด 7 วันที่ใช้ในวันนั้น")
+    }
+    public var dailyNoData: String {
+        L("Recorded from the day this version started", "このバージョンを使い始めた日から記録されます", "從開始使用此版本的那天起記錄",
+          "从开始使用此版本的那天起记录", "이 버전을 사용하기 시작한 날부터 기록됨", "Enregistré à partir du premier jour d’utilisation de cette version",
+          "Wird ab dem ersten Tag mit dieser Version aufgezeichnet", "บันทึกตั้งแต่วันที่เริ่มใช้เวอร์ชันนี้")
+    }
+    public var previousWeek: String { L("Previous week", "前の週", "上一週", "上一周", "이전 주", "Semaine précédente", "Vorherige Woche", "สัปดาห์ก่อน") }
+    public var nextWeek: String { L("Next week", "次の週", "下一週", "下一周", "다음 주", "Semaine suivante", "Nächste Woche", "สัปดาห์ถัดไป") }
     public var notOffered: String {
         L("Not offered on this plan", "このプランでは提供されていません", "此方案未提供", "此套餐未提供",
           "이 요금제에서는 제공되지 않음", "Non inclus dans cette offre", "In diesem Tarif nicht enthalten", "แพ็กเกจนี้ไม่มี")
