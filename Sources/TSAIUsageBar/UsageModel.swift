@@ -31,6 +31,10 @@ final class UsageModel: ObservableObject {
     @Published private(set) var github = ProviderStatus()
     /// Per-day usage of the 7-day window, recorded by the app (Codex) or the relay (Claude).
     @Published private(set) var daily: [Provider: DailyUsageLog] = [:]
+    /// Per-day private Actions usage read from GitHub for the chart.
+    @Published private(set) var githubDaily = GitHubDailyCache()
+    @Published private(set) var githubDailyLoading = false
+    @Published private(set) var githubDailyFailed = false
     @Published private(set) var githubError: GitHubError?
     @Published private(set) var githubLogin: String? = GitHubAuth.load()?.login
     /// Shown while connecting: the code the person enters in the browser.
@@ -69,6 +73,46 @@ final class UsageModel: ObservableObject {
         github.snapshot = SnapshotStore.load(paths.snapshotURL(.github))
         daily[.claude] = DailyUsageStore.load(.claude, paths: paths)
         daily[.codex] = DailyUsageStore.load(.codex, paths: paths)
+        githubDaily = Self.loadGitHubDaily(paths)
+    }
+
+    private static func githubDailyURL(_ paths: AppPaths) -> URL { paths.supportDirectory.appendingPathComponent("github-daily.json") }
+
+    private static func loadGitHubDaily(_ paths: AppPaths) -> GitHubDailyCache {
+        guard let data = try? Data(contentsOf: githubDailyURL(paths)) else { return GitHubDailyCache() }
+        let d = JSONDecoder()
+        d.dateDecodingStrategy = .secondsSince1970
+        return (try? d.decode(GitHubDailyCache.self, from: data)) ?? GitHubDailyCache()
+    }
+
+    /// Reads the shown days that are missing or recent. One read at a time.
+    func loadGitHubDays(_ keys: [String]) {
+        guard githubLogin != nil, !githubDailyLoading else { return }
+        let needed = githubDaily.needsRead(keys, now: Date())
+        guard !needed.isEmpty else { return }
+        githubDailyLoading = true
+        Task {
+            let result = await GitHubDailyClient.read(days: needed)
+            self.githubDailyLoading = false
+            switch result {
+            case .success(let r):
+                var cache = self.githubDaily
+                let now = Date()
+                for (k, v) in r.amounts { cache.amounts[k] = v; cache.fetchedAt[k] = now }
+                cache.includedAmount = r.included
+                cache.prune(now: now)
+                self.githubDaily = cache
+                self.githubDailyFailed = false
+                let e = JSONEncoder()
+                e.dateEncodingStrategy = .secondsSince1970
+                if let data = try? e.encode(cache) {
+                    try? self.paths.ensureDirectory()
+                    try? writeAtomically(data, to: Self.githubDailyURL(self.paths), permissions: 0o600)
+                }
+            case .failure:
+                self.githubDailyFailed = true
+            }
+        }
     }
 
     func start() {
@@ -339,6 +383,8 @@ final class UsageModel: ObservableObject {
         githubLogin = nil
         github = ProviderStatus()
         githubError = .notConnected
+        githubDaily = GitHubDailyCache()
+        try? FileManager.default.removeItem(at: Self.githubDailyURL(paths))
         try? FileManager.default.removeItem(at: paths.snapshotURL(.github))
     }
 
