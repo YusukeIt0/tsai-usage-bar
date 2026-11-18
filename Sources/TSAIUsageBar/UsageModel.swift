@@ -106,7 +106,8 @@ final class UsageModel: ObservableObject {
     }
 
     func display(_ id: ItemID) -> WindowDisplay {
-        WindowDisplay.evaluate(status(id.provider).snapshot, id.window, now: now)
+        // Only Claude Code returns to full after a reset (owner decision, 2026-11-18).
+        WindowDisplay.evaluate(status(id.provider).snapshot, id.window, now: now, fullAfterReset: id.provider == .claude)
     }
 
     /// True when the last Codex attempt failed and the shown values are older.

@@ -57,6 +57,8 @@ struct PopoverView: View {
                 switch display {
                 case .value(_, let reset):
                     if let reset { Text(resetText(reset)) } else { EmptyView() }
+                case .resetPassed:
+                    Text(s.resetNewWindowOnNextUse)
                 case .awaitingUpdateAfterReset:
                     Text(s.awaitingAfterReset)
                 case .unavailable:
