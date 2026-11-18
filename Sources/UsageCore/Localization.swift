@@ -135,6 +135,12 @@ public struct Strings: Sendable {
         L("Reset passed · waiting for update", "リセット済み・更新待ち", "已重置・等待更新", "已重置・等待更新",
           "초기화됨 · 업데이트 대기 중", "Réinitialisé · en attente de mise à jour", "Zurückgesetzt · warte auf Aktualisierung", "รีเซ็ตแล้ว · กำลังรอข้อมูลใหม่")
     }
+    public var resetNewWindowOnNextUse: String {
+        L("Reset · a new window starts on next use", "リセット済み・次の利用で新しい枠が始まります",
+          "已重置・下次使用時開始新的額度", "已重置・下次使用时开始新的额度",
+          "초기화됨 · 다음 사용 시 새 기간 시작", "Réinitialisé · une nouvelle période démarre à la prochaine utilisation",
+          "Zurückgesetzt · neues Zeitfenster beginnt bei nächster Nutzung", "รีเซ็ตแล้ว · ช่วงใหม่จะเริ่มเมื่อใช้งานครั้งถัดไป")
+    }
     public var notOffered: String {
         L("Not offered on this plan", "このプランでは提供されていません", "此方案未提供", "此套餐未提供",
           "이 요금제에서는 제공되지 않음", "Non inclus dans cette offre", "In diesem Tarif nicht enthalten", "แพ็กเกจนี้ไม่มี")

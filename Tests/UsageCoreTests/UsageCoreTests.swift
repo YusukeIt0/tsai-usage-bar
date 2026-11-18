@@ -104,11 +104,21 @@ final class DisplayTests: XCTestCase {
         XCTAssertEqual(d.label(.sevenDay, mode: .remaining), "W—")
     }
 
-    func testResetPassedWithoutNewDataWaitsInsteadOfShowing100() {
+    func testResetPassedWaitsForCodexAndGitHub() {
         let s = snap(90, reset: t0 + 60, fetched: t0)
+        XCTAssertEqual(WindowDisplay.evaluate(s, .fiveHour, now: t0 + 59).label(.fiveHour, mode: .remaining), "H10%")
         let d = WindowDisplay.evaluate(s, .fiveHour, now: t0 + 61)
         XCTAssertEqual(d, .awaitingUpdateAfterReset(resetAt: t0 + 60))
         XCTAssertEqual(d.label(.fiveHour, mode: .remaining), "H—")
+    }
+
+    func testResetPassedShowsFullWindowForClaude() {
+        // Owner decision (2026-11-18), Claude Code only: back to full after the reset time.
+        let s = snap(90, reset: t0 + 60, fetched: t0)
+        let d = WindowDisplay.evaluate(s, .fiveHour, now: t0 + 61, fullAfterReset: true)
+        XCTAssertEqual(d, .resetPassed(resetAt: t0 + 60))
+        XCTAssertEqual(d.label(.fiveHour, mode: .remaining), "H100%")
+        XCTAssertEqual(d.label(.fiveHour, mode: .used), "H0%")
     }
 
     func testNewDataAfterResetIsShown() {
@@ -120,7 +130,7 @@ final class DisplayTests: XCTestCase {
         // An idle Claude Code session can re-send its cached, already-reset values.
         let first = SnapshotStore.merge([.fiveHour: UsageWindow(usedPercent: 80, resetsAt: t0 + 60)], into: nil, at: t0)
         let resent = SnapshotStore.merge([.fiveHour: UsageWindow(usedPercent: 80, resetsAt: t0 + 60)], into: first, at: t0 + 120)
-        XCTAssertEqual(WindowDisplay.evaluate(resent, .fiveHour, now: t0 + 120), .awaitingUpdateAfterReset(resetAt: t0 + 60))
+        XCTAssertEqual(WindowDisplay.evaluate(resent, .fiveHour, now: t0 + 120, fullAfterReset: true), .resetPassed(resetAt: t0 + 60))
     }
 
     func testMergeKeepsPerWindowTimes() {
@@ -426,5 +436,38 @@ final class GitHubActionsUsageTests: XCTestCase {
         let snap = ProviderSnapshot(windows: [.month: UsageWindow(usedPercent: 1, resetsAt: nil)], fetchedAt: Date())
         XCTAssertEqual(ItemVisibility.defaultItem(for: .github, snapshot: snap), ItemID(.github, .month))
         XCTAssertEqual(WindowDisplay.value(usedPercent: 25, resetsAt: nil).label(.month, mode: .remaining), "M75%")
+    }
+}
+
+final class ClaudeWindowAfterResetTests: XCTestCase {
+    let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+
+    func testWindowDroppedAfterResetStaysOfferedAndShowsFull() {
+        // Claude Code reports both windows, then drops five_hour once its reset passes.
+        let first = SnapshotStore.merge([.fiveHour: UsageWindow(usedPercent: 40, resetsAt: t0 + 3600),
+                                         .sevenDay: UsageWindow(usedPercent: 10, resetsAt: t0 + 500_000)], into: nil, at: t0)
+        let afterReset = SnapshotStore.merge([.sevenDay: UsageWindow(usedPercent: 10, resetsAt: t0 + 500_000)],
+                                             into: first, at: t0 + 3700)
+        XCTAssertTrue(afterReset.offers(.fiveHour))
+        XCTAssertEqual(ItemVisibility.visible(enabled: [ItemID(.claude, .fiveHour)], snapshots: [.claude: afterReset]),
+                       [ItemID(.claude, .fiveHour)])
+        let d = WindowDisplay.evaluate(afterReset, .fiveHour, now: t0 + 3700, fullAfterReset: true)
+        XCTAssertEqual(d, .resetPassed(resetAt: t0 + 3600))
+        XCTAssertEqual(d.label(.fiveHour, mode: .remaining), "H100%") // back to full until the next use
+        // Still offered across further replies until the next use brings a new window.
+        let later = SnapshotStore.merge([.sevenDay: UsageWindow(usedPercent: 11, resetsAt: t0 + 500_000)],
+                                        into: afterReset, at: t0 + 7200)
+        XCTAssertTrue(later.offers(.fiveHour))
+        let nextUse = SnapshotStore.merge([.fiveHour: UsageWindow(usedPercent: 2, resetsAt: t0 + 7200 + 18_000),
+                                           .sevenDay: UsageWindow(usedPercent: 12, resetsAt: t0 + 500_000)], into: later, at: t0 + 7300)
+        XCTAssertEqual(WindowDisplay.evaluate(nextUse, .fiveHour, now: t0 + 7300, fullAfterReset: true).percent(mode: .remaining), 98)
+    }
+
+    func testWindowMissingBeforeResetIsNotOffered() {
+        // Disappearing before its reset time (for example a plan change) means not offered.
+        let first = SnapshotStore.merge([.fiveHour: UsageWindow(usedPercent: 40, resetsAt: t0 + 3600),
+                                         .sevenDay: UsageWindow(usedPercent: 10, resetsAt: t0 + 500_000)], into: nil, at: t0)
+        let gone = SnapshotStore.merge([.sevenDay: UsageWindow(usedPercent: 10, resetsAt: t0 + 500_000)], into: first, at: t0 + 60)
+        XCTAssertFalse(gone.offers(.fiveHour))
     }
 }

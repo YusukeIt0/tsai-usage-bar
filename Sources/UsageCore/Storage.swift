@@ -68,8 +68,15 @@ public enum SnapshotStore {
             w.observedAt = date
             merged[k] = w
         }
-        // Drop windows the latest reply no longer reports (plan without that limit).
-        let reported = WindowKind.allCases.filter { windows[$0] != nil }
+        // Claude Code drops a window from its data once that window's reset time passes,
+        // until the next use starts a new one. Such a window is still offered: keep its last
+        // value, which the display shows as "reset, waiting for the next value".
+        let droppedAfterReset = WindowKind.allCases.filter { k in
+            guard windows[k] == nil, let reset = existing?.windows[k]?.resetsAt else { return false }
+            return reset <= date
+        }
+        // A window that disappears before its reset (or was never reported) is not offered.
+        let reported = WindowKind.allCases.filter { windows[$0] != nil || droppedAfterReset.contains($0) }
         for k in WindowKind.allCases where !reported.contains(k) { merged.removeValue(forKey: k) }
         return ProviderSnapshot(windows: merged, fetchedAt: date, reportedKinds: reported)
     }
