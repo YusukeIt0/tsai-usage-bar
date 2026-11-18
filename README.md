@@ -13,6 +13,8 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
   <img src="docs/images/popover-github.png" alt="GitHub Actions panel showing free usage for private repositories" width="280">
 </p>
 
+<sub>The Claude Code and Codex daily bars in these screenshots use sample values; all other numbers are real.</sub>
+
 > **Unofficial.** Not affiliated with, endorsed by, or sponsored by Anthropic, OpenAI or GitHub. Claude and Claude Code are trademarks of Anthropic, PBC. Codex and OpenAI are trademarks of OpenAI. GitHub and the Octocat are trademarks of GitHub, Inc. The icons are simplified silhouettes used only to tell the services apart.
 
 ## What it shows
@@ -28,6 +30,9 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 - Each icon fills like a battery: the solid part matches the number shown, and the rest is faint. With no value, the whole icon is faint.
 - Up to five items: Claude Code H/W, Codex H/W and GitHub Actions M. Turn each on or off in Settings; hold ⌘ and drag to reorder. Turning off all of a service's items pauses it.
 - Click an item to see that service's bars, reset times (in your Mac's time zone) and time remaining.
+- **Daily usage**: below the windows, a chart shows the last 7 days, one bar per day; ◀ ▶ step through earlier weeks.
+  - Claude Code and Codex: the share of the 7-day limit used each day. These services report only current percentages, so the app records the daily increase locally, starting when you install this version (about 120 days are kept). Days before that show as empty outlines.
+  - GitHub Actions: the share of the monthly allowance that private repositories used each day, from GitHub's official per-day billing data, so earlier days are available too (UTC dates).
 - Windows your plan doesn't have (for example, plans without a 5-hour limit) are hidden automatically.
 - Values are never guessed. Reaching a reset time doesn't turn a value into 100%; the app waits for the next official value.
 - Languages: English, 日本語, 繁體中文, 简体中文, 한국어, Français, Deutsch and ไทย. Automatic picks the first supported macOS language (otherwise English), or choose one in Settings.
@@ -66,7 +71,7 @@ curl -fsSL https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/main/insta
 
 **Disconnect** or uninstall puts the previous setting back. Values update with each Claude Code response. If you aren't signed in to Claude Code, the app offers **Sign in to Claude Code in browser** (`claude auth login`).
 
-**GitHub Actions**: Settings → **Connect GitHub**. The app copies a one-time code and opens GitHub; paste it and authorize the *TSAI UsageBar* GitHub App. It can only read your plan and billing usage ("Plan: read"). Standard runners on public repositories are free with no limit, so the app shows the monthly included usage that private repositories consume (Free: 12 USD, Pro: 18 USD of compute; other plans show "—"). It resets at 00:00 UTC on the 1st, and GitHub's totals can lag by a few hours. **Disconnect** forgets the token on this Mac; revoke the authorization anytime under GitHub → Settings → Applications.
+**GitHub Actions**: Settings → **Connect GitHub**. The app copies a one-time code and opens GitHub; paste it and authorize the *TSAI UsageBar* GitHub App. It can only read your plan and billing usage ("Plan: read"). Standard runners on public repositories are free with no limit, so the app shows the monthly included usage that private repositories consume (Free: 12 USD, Pro: 18 USD of compute; other plans show "—"). It resets at 00:00 UTC on the 1st, and GitHub's totals can lag by a few hours. If you set an Actions budget on GitHub, enter the same amount under **Monthly Actions budget (optional)** in Settings; `M` then measures against the free usage plus the budget, i.e. how much is left before Actions stops (GitHub has no public API for personal budgets, so it can't be read automatically). **Disconnect** forgets the token on this Mac; revoke the authorization anytime under GitHub → Settings → Applications.
 
 ## How it gets data
 
@@ -74,7 +79,7 @@ curl -fsSL https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/main/insta
 |---|---|---|
 | Codex | Official `codex app-server`: `account/rateLimits/read` (`usedPercent`, `windowDurationMins`, `resetsAt`) | About every 3 minutes, every minute while its panel is open, right after a reset time, on wake and network recovery, and on ↻ |
 | Claude Code | Official `statusLine` JSON: `rate_limits.five_hour` / `seven_day` (`used_percentage`, `resets_at`) | Immediately whenever Claude Code updates its status line |
-| GitHub Actions | Official billing usage summary (`/users/{user}/settings/billing/usage/summary`, Actions) minus each public repository's usage; plan from `/user` | About hourly, when its panel opens (if older than 10 minutes), after wake, and on ↻ |
+| GitHub Actions | Official billing usage summary (`/users/{user}/settings/billing/usage/summary`, Actions) minus each public repository's usage; plan from `/user` | About hourly, when its panel opens (if older than 10 minutes), after wake, and on ↻. Daily chart: per-day summaries for the shown week only, when the panel shows it |
 
 - Codex windows are matched by duration (300 min = H, 10080 min = W). Other buckets or durations are never substituted.
 - Each Codex query starts `codex app-server`, reads, and stops it. Only read requests are sent: no sessions, model runs, purchases, or reset-credit use.
@@ -84,7 +89,7 @@ curl -fsSL https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/main/insta
 ## Privacy
 
 - No servers of its own and no analytics. The app's own network requests are the daily update check against this repository's releases and, only if you connect GitHub, read-only GitHub API requests (your plan, public repository list and Actions usage). Codex and Claude Code talk to their own services.
-- Stored locally in `~/Library/Application Support/TSAI UsageBar/`: limit percentages and reset times, and, if you connect GitHub, its access token in a file readable only by your user (like the Codex CLI's login file). The Keychain isn't used because ad-hoc signed updates would make macOS ask for access again each time. Preferences are in the app's defaults.
+- Stored locally in `~/Library/Application Support/TSAI UsageBar/`: limit percentages and reset times, the daily usage history, and, if you connect GitHub, its access token in a file readable only by your user (like the Codex CLI's login file). The Keychain isn't used because ad-hoc signed updates would make macOS ask for access again each time. Preferences are in the app's defaults.
 - Never stored or logged: Codex or Claude Code credentials, prompts, conversations, transcript paths, or session IDs. The app doesn't read the Keychain or call private endpoints.
 
 ## Build from source
