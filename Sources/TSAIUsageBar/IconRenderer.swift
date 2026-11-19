@@ -80,26 +80,18 @@ enum IconRenderer {
         return img
     }
 
-    /// Pixel creature: block body, short side arms, four legs.
+    /// Pixel creature without legs: a tall block body with short side arms, the same
+    /// height as the cloud and cat icons so the three line up (owner's choice).
     static func claudeShape(_ w: CGFloat) -> (NSBezierPath, CGRect) {
         let arm: CGFloat = 2.5
         let bodyX = arm, bodyW = w - arm * 2
-        // The body sits 1 pt lower with shorter legs, so the label lines up with the
-        // cloud and cat icons (text centred at 10.5) and stays centred in the body.
-        let bodyTop: CGFloat = 1.5, bodyBottom: CGFloat = 15.5
+        let bodyTop: CGFloat = 0.5, bodyBottom: CGFloat = 17.5
         let path = NSBezierPath()
         path.append(NSBezierPath(roundedRect: CGRect(x: bodyX, y: bodyTop, width: bodyW, height: bodyBottom - bodyTop),
                                  xRadius: 1, yRadius: 1))
         // Arms
         path.append(NSBezierPath(roundedRect: CGRect(x: 0, y: 9.5, width: arm + 1, height: 3.5), xRadius: 0.6, yRadius: 0.6))
         path.append(NSBezierPath(roundedRect: CGRect(x: w - arm - 1, y: 9.5, width: arm + 1, height: 3.5), xRadius: 0.6, yRadius: 0.6))
-        // Legs at the reference proportions
-        let legW: CGFloat = 2.3
-        for f in [0.08, 0.25, 0.65, 0.82] as [CGFloat] {
-            let x = bodyX + bodyW * f
-            path.append(NSBezierPath(roundedRect: CGRect(x: x, y: bodyBottom - 1, width: legW, height: 18 - bodyBottom + 0.5),
-                                     xRadius: 0.5, yRadius: 0.5))
-        }
         let textBox = CGRect(x: bodyX, y: 5, width: bodyW, height: 11)
         return (path, textBox)
     }
