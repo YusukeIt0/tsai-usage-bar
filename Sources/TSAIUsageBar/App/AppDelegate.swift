@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             items[id] = item
         }
 
-        model.onResetCreditArrived = { [weak self] remaining in
+        model.codex.onResetCreditArrived = { [weak self] remaining in
             guard let self else { return }
             self.notifier.postResetCreditArrived(remaining: remaining, strings: self.settings.strings)
         }
@@ -59,8 +59,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// First data from a provider turns on its 5-hour item, or 7-day when 5-hour is not offered.
     private func applyActiveProviders() {
-        model.notifyResetCredits = settings.notifyResetCredits
-        if model.githubBudgetUSD != settings.githubBudgetUSD { model.githubBudgetUSD = settings.githubBudgetUSD }
+        model.codex.notifyResetCredits = settings.notifyResetCredits
+        if model.github.budgetUSD != settings.githubBudgetUSD { model.github.budgetUSD = settings.githubBudgetUSD }
         model.setActiveProviders(ItemVisibility.activeProviders(enabled: settings.enabledItems,
                                                                 initialized: settings.initializedProviders))
     }

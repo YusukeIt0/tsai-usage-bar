@@ -6,11 +6,11 @@ enum CodexClient {
     static let timeout: TimeInterval = 15
 
     /// `details`: also read reset-credit detail rows (expiry); done only when a panel is open.
-    static func readRateLimits(details: Bool = false) async -> Result<ProviderSnapshot, CodexError> {
-        guard let exe = CodexLocator.find() else { return .failure(.notFound) }
+    static func readRateLimits(details: Bool = false) async -> Result<ProviderSnapshot, ProviderError> {
+        guard let exe = CodexLocator.find() else { return .failure(.notInstalled) }
         let session = CodexAppServerSession(executable: exe)
         defer { session.close() }
-        do { try session.start() } catch { return .failure(.notFound) }
+        do { try session.start() } catch { return .failure(.notInstalled) }
         if case .failure(let e) = await session.initialize(timeout: timeout) { return .failure(e) }
 
         // Signed-in check first so a missing login is reported clearly.
@@ -32,8 +32,8 @@ enum CodexClient {
 
     /// Official ChatGPT sign-in: the server returns a URL that is opened in the browser.
     /// Waits for `account/login/completed` (up to 10 minutes).
-    static func signIn(openURL: @escaping @Sendable (URL) -> Void) async -> Result<Void, CodexError> {
-        guard let exe = CodexLocator.find() else { return .failure(.notFound) }
+    static func signIn(openURL: @escaping @Sendable (URL) -> Void) async -> Result<Void, ProviderError> {
+        guard let exe = CodexLocator.find() else { return .failure(.notInstalled) }
         let session = CodexAppServerSession(executable: exe)
         defer { session.close() }
         let completed = AsyncStream<Bool>.makeStream()
@@ -43,7 +43,7 @@ enum CodexClient {
                 completed.continuation.finish()
             }
         }
-        do { try session.start() } catch { return .failure(.notFound) }
+        do { try session.start() } catch { return .failure(.notInstalled) }
         if case .failure(let e) = await session.initialize(timeout: timeout) { return .failure(e) }
         let r = await session.request("account/login/start", params: ["type": "chatgpt"], timeout: timeout)
         guard case .success(let res) = r, let s = res["authUrl"] as? String, let url = URL(string: s) else {

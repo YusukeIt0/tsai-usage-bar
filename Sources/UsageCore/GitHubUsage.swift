@@ -129,6 +129,16 @@ public struct GitHubDailyCache: Codable, Equatable, Sendable {
         return DailyUsageLog.dayKey(date, calendar: cal)
     }
 
+    /// Stores amounts read at `now` and the plan's included amount.
+    public mutating func apply(amounts read: [String: Double], included: Double, now: Date) {
+        for (k, v) in read {
+            amounts[k] = v
+            fetchedAt[k] = now
+        }
+        includedAmount = included
+        prune(now: now)
+    }
+
     /// Keeps about two years, the period GitHub's summary endpoint serves.
     public mutating func prune(now: Date) {
         let cutoff = Self.utcKey(now.addingTimeInterval(-730 * 86_400))
@@ -153,4 +163,25 @@ public enum BudgetBarSplit {
         case .remaining: return ((included - freeUsed) / total, (budget - budgetUsed) / total)
         }
     }
+}
+
+/// The GitHub daily cache file in the support folder.
+public enum GitHubDailyStore {
+    public static func url(paths: AppPaths) -> URL { paths.supportDirectory.appendingPathComponent("github-daily.json") }
+
+    public static func load(paths: AppPaths) -> GitHubDailyCache {
+        guard let data = try? Data(contentsOf: url(paths: paths)) else { return GitHubDailyCache() }
+        let d = JSONDecoder()
+        d.dateDecodingStrategy = .secondsSince1970
+        return (try? d.decode(GitHubDailyCache.self, from: data)) ?? GitHubDailyCache()
+    }
+
+    public static func save(_ cache: GitHubDailyCache, paths: AppPaths) throws {
+        let e = JSONEncoder()
+        e.dateEncodingStrategy = .secondsSince1970
+        try paths.ensureDirectory()
+        try writeAtomically(try e.encode(cache), to: url(paths: paths), permissions: 0o600)
+    }
+
+    public static func remove(paths: AppPaths) { try? FileManager.default.removeItem(at: url(paths: paths)) }
 }

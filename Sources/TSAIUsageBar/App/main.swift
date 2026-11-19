@@ -22,6 +22,10 @@ MainActor.assumeIsolated {
         print("\(LanguageCatalog.main.languages.count) languages in \(dir.path), \(problems.count) problems")
         exit(problems.isEmpty ? 0 : 1)
     }
+    // Developer aid: reads every service once with the real clients.
+    if args.contains("--check-sources") {
+        exit(SourceCheck.run())
+    }
     // Developer aids for checking notification permission across builds.
     if args.contains("--notification-test") || args.contains("--notification-status") {
         NotificationCheck.run(post: args.contains("--notification-test"))

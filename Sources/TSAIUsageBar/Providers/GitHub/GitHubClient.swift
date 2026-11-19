@@ -1,31 +1,24 @@
 import AppKit
 import UsageCore
 
-enum GitHubError: Error, Equatable {
-    case notConnected
-    case unknownPlan
-    case tooManyRepositories
-    case failed
-}
-
 /// Reads this month's included Actions usage for private repositories.
 enum GitHubClient {
     /// Public repositories checked at most (each needs one request).
     static let maxPublicRepos = 300
 
-    static func readUsage(now: Date = Date()) async -> Result<ProviderSnapshot, GitHubError> {
+    static func readUsage(now: Date = Date()) async -> Result<ProviderSnapshot, ProviderError> {
         do {
-            guard let token = try await GitHubAuth.validAccessToken() else { return .failure(.notConnected) }
+            guard let token = try await GitHubAuth.validAccessToken() else { return .failure(.notSignedIn) }
             let (userData, userStatus) = try await GitHubAPI.get("/user", token: token)
-            if userStatus == 401 { GitHubAuth.remove(); return .failure(.notConnected) }
+            if userStatus == 401 { GitHubAuth.remove(); return .failure(.notSignedIn) }
             guard userStatus == 200, let user = (try? JSONSerialization.jsonObject(with: userData)) as? [String: Any],
-                  let login = user["login"] as? String else { return .failure(.failed) }
+                  let login = user["login"] as? String else { return .failure(.failed(nil)) }
             let plan = (user["plan"] as? [String: Any])?["name"] as? String
             let p = GitHubActionsUsage.period(containing: now)
             let base = "/users/\(login)/settings/billing/usage/summary?year=\(p.year)&month=\(p.month)&product=Actions"
 
             let (totalData, totalStatus) = try await GitHubAPI.get(base, token: token)
-            guard totalStatus == 200 else { return .failure(.failed) }
+            guard totalStatus == 200 else { return .failure(.failed(nil)) }
             let total = try GitHubActionsUsage.items(fromSummaryJSON: totalData)
 
             // Public repositories are free; subtract them. Skipped when nothing was used.
@@ -41,7 +34,7 @@ enum GitHubClient {
                         group.addTask {
                             let q = repo.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? repo
                             let (d, s) = try await GitHubAPI.get(base + "&repository=\(q)", token: token)
-                            guard s == 200 else { throw GitHubError.failed }
+                            guard s == 200 else { throw ProviderError.failed(nil) }
                             return try GitHubActionsUsage.items(fromSummaryJSON: d)
                         }
                     }
@@ -60,10 +53,10 @@ enum GitHubClient {
             } catch {
                 return .failure(.unknownPlan)
             }
-        } catch let e as GitHubError {
+        } catch let e as ProviderError {
             return .failure(e)
         } catch {
-            return .failure(.failed)
+            return .failure(.failed(nil))
         }
     }
 
@@ -72,7 +65,7 @@ enum GitHubClient {
         var names: [String] = []
         for page in 1...4 {
             let (d, s) = try await GitHubAPI.get("/users/\(login)/repos?type=owner&per_page=100&page=\(page)", token: token)
-            guard s == 200, let arr = (try? JSONSerialization.jsonObject(with: d)) as? [[String: Any]] else { throw GitHubError.failed }
+            guard s == 200, let arr = (try? JSONSerialization.jsonObject(with: d)) as? [[String: Any]] else { throw ProviderError.failed(nil) }
             names += arr.compactMap { r in (r["private"] as? Bool) == false ? r["full_name"] as? String : nil }
             if arr.count < 100 { break }
         }

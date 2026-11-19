@@ -64,7 +64,7 @@ enum UIPreview {
         if ProcessInfo.processInfo.environment["TSAI_PREVIEW_MODE"] == "used" { settings.displayMode = .used }
         let model = UsageModel()
         // Optional sample budget for checking the budget rows: TSAI_PREVIEW_BUDGET=10
-        if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.githubBudgetUSD = b }
+        if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.github.budgetUSD = b }
         let updates = UpdateChecker(defaults: defaults)
         for lang in LanguageCatalog.main.languages {
             let setting = LanguageSetting.fixed(lang.code)
