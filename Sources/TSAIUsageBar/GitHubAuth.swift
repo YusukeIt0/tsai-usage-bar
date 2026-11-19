@@ -216,7 +216,8 @@ enum GitHubClient {
                 }
             }
             do {
-                let w = try GitHubActionsUsage.window(plan: plan, total: total, publicRepos: publicItems, now: now)
+                var w = try GitHubActionsUsage.window(plan: plan, total: total, publicRepos: publicItems, now: now)
+                w.chargedAmount = GitHubActionsUsage.chargedAmount(fromSummaryJSON: totalData)
                 return .success(ProviderSnapshot(windows: [.month: w], fetchedAt: now))
             } catch {
                 return .failure(.unknownPlan)

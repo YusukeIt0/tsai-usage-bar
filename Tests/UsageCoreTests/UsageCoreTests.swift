@@ -644,3 +644,25 @@ final class ResetCreditsTests: XCTestCase {
         XCTAssertNil(ResetCredits(available: 1, earliestExpiry: nil).keepingExpiry(from: detailed).earliestExpiry) // count changed
     }
 }
+
+final class GitHubBudgetRowTests: XCTestCase {
+    func testChargedAmountIsGitHubsNetAmount() {
+        // Real November shape: Linux over the free usage, macOS and storage free.
+        let data = try! JSONSerialization.data(withJSONObject: ["usageItems": [
+            ["product": "Actions", "sku": "actions_linux", "grossAmount": 56.262, "netAmount": 3.294],
+            ["product": "Actions", "sku": "actions_macos", "grossAmount": 56.234, "netAmount": 0],
+            ["product": "Actions", "sku": "actions_storage", "grossAmount": 0.004, "netAmount": 0],
+            ["product": "Packages", "sku": "packages_storage", "grossAmount": 1, "netAmount": 1]]])
+        XCTAssertEqual(GitHubActionsUsage.chargedAmount(fromSummaryJSON: data)!, 3.294, accuracy: 0.0001)
+    }
+
+    func testBudgetPercent() {
+        var w = UsageWindow(usedPercent: 100, resetsAt: nil, usedAmount: 21.45, includedAmount: 18)
+        w.chargedAmount = 3.294
+        XCTAssertEqual(GitHubActionsUsage.budgetPercent(w, budgetUSD: 20)!, 16.47, accuracy: 0.01)
+        XCTAssertEqual(GitHubActionsUsage.budgetPercent(w, budgetUSD: 2), 100) // capped
+        XCTAssertNil(GitHubActionsUsage.budgetPercent(w, budgetUSD: nil))
+        w.chargedAmount = nil
+        XCTAssertNil(GitHubActionsUsage.budgetPercent(w, budgetUSD: 20)) // older snapshot: re-read first
+    }
+}

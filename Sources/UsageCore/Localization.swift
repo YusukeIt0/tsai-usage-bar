@@ -308,6 +308,13 @@ public struct Strings: Sendable {
                "免费额度＋预算 %1（私有仓库）", "무료 사용량 + 예산 %1 (비공개 저장소)", "Utilisation gratuite + budget de %1 (dépôts privés)",
                "Kostenloses Kontingent + Budget %1 (private Repos)", "โควตาฟรี + งบ %1 (รีโพส่วนตัว)"), amount)
     }
+    public func budgetRowTitle(_ amount: String) -> String {
+        fill(L("Budget (%1)", "予算（%1）", "預算（%1）", "预算（%1）", "예산 (%1)", "Budget (%1)", "Budget (%1)", "งบ (%1)"), amount)
+    }
+    public func budgetSpent(_ used: String, _ total: String) -> String {
+        fill(L("Spent %1 of %2", "使用額：%1 / %2", "已用 %1 / %2", "已用 %1 / %2", "사용액: %1 / %2",
+               "Dépensé : %1 sur %2", "Ausgegeben: %1 von %2", "ใช้ไป %1 จาก %2"), used, total)
+    }
     public var budgetUsedUp: String {
         L("Free usage and budget are used up", "無料枠と予算を使い切りました", "免費額度與預算已用完", "免费额度和预算已用完",
           "무료 사용량과 예산을 모두 사용함", "Utilisation gratuite et budget épuisés", "Kostenloses Kontingent und Budget aufgebraucht",
