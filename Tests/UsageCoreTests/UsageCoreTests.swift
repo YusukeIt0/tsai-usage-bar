@@ -217,11 +217,19 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["en-GB"]), .en)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["th-TH", "ja-JP"]), .th)
         // The first supported preference wins; unsupported ones are skipped.
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-ES", "de-DE", "ja-JP"]), .de)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-ES", "pt-BR"]), .en)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["nl-NL", "de-DE", "ja-JP"]), .de)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["nl-NL", "sv-SE"]), .en)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: []), .en)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["fr-CA"]), .fr)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ko-KR"]), .ko)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["pt-BR"]), .ptBR)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["pt-PT"]), .ptBR)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["id-ID"]), .id)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["in"]), .id)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-MX"]), .es)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-419"]), .es)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ru-KZ"]), .ru)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["uk-UA", "ru-RU"]), .ru) // first supported wins
         // Chinese: explicit script first, then region.
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hant-HK"]), .zhHant)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hans-TW"]), .zhHans)
@@ -237,10 +245,12 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(LanguageSetting(storedValue: "english"), .fixed(.en))
         XCTAssertEqual(LanguageSetting(storedValue: "automatic"), .automatic)
         XCTAssertEqual(LanguageSetting(storedValue: "zh-hant"), .fixed(.zhHant))
-        XCTAssertNil(LanguageSetting(storedValue: "es"))
+        XCTAssertNil(LanguageSetting(storedValue: "nl"))
         for s in LanguageSetting.allCases { XCTAssertEqual(LanguageSetting(storedValue: s.storedValue), s) }
-        XCTAssertEqual(LanguageSetting.allCases.count, 9)
-        XCTAssertEqual(AppLanguage.allCases.map(\.rawValue), ["en", "ja", "zh-hant", "zh-hans", "ko", "fr", "de", "th"])
+        XCTAssertEqual(LanguageSetting.allCases.count, 13)
+        XCTAssertEqual(AppLanguage.allCases.map(\.rawValue),
+                       ["en", "ja", "zh-hant", "zh-hans", "ko", "fr", "de", "th", "pt-br", "id", "es", "ru"])
+        XCTAssertEqual(LanguageSetting(storedValue: "pt-br"), .fixed(.ptBR))
     }
 
     func testEveryLanguageHasDistinctLocalizedText() {
