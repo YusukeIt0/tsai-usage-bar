@@ -46,3 +46,27 @@ public struct FetchPolicy: Sendable {
         return now.timeIntervalSince(lastSuccess) >= 30
     }
 }
+
+/// Decides when GitHub billing usage is read. Its totals lag by hours, so hourly is enough.
+public struct GitHubFetchPolicy: Sendable {
+    public var interval: TimeInterval = 3600
+    /// Opening the panel reads again when the last attempt is older than this.
+    public var panelRefreshAge: TimeInterval = 600
+    /// Failures stretch the interval up to this many times.
+    public var maxBackoffFactor: Double = 4
+
+    public init() {}
+
+    public func shouldFetch(force: Bool, now: Date, lastAttempt: Date?) -> Bool {
+        guard !force, let lastAttempt else { return true }
+        return now.timeIntervalSince(lastAttempt) >= interval
+    }
+
+    public func shouldFetchOnPanelOpen(now: Date, lastAttempt: Date?) -> Bool {
+        now.timeIntervalSince(lastAttempt ?? .distantPast) > panelRefreshAge
+    }
+
+    public func nextDelay(consecutiveFailures: Int) -> TimeInterval {
+        interval * min(maxBackoffFactor, max(1, Double(consecutiveFailures)))
+    }
+}

@@ -88,8 +88,8 @@ struct SettingsView: View {
         .onAppear {
             launchAtLogin = settings.launchAtLogin
             budgetText = settings.githubBudgetUSD.map { USDText.format($0).replacingOccurrences(of: "$", with: "") } ?? ""
-            model.refreshClaudeLink()
-            Task { await model.refreshClaudeAuth() }
+            model.claude.refreshLink()
+            Task { await model.claude.refreshAuth() }
         }
     }
 
@@ -121,16 +121,16 @@ struct SettingsView: View {
             if !model.isActive(.codex) {
                 Text(s.pausedHidden).foregroundStyle(.secondary)
             } else {
-            switch model.codex.lastError {
-            case .some(.notFound):
+            switch model.codex.status.lastError {
+            case .some(.notInstalled):
                 Text(s.codexNotFound).foregroundStyle(.secondary)
             case .some(.notSignedIn):
-                Button(model.codexSigningIn ? s.signingIn : s.signInCodex) { model.signInCodex() }
-                    .disabled(model.codexSigningIn)
+                Button(model.codex.signingIn ? s.signingIn : s.signInCodex) { model.codex.signIn() }
+                    .disabled(model.codex.signingIn)
             case .some:
                 Text(s.fetchFailed).foregroundStyle(.orange)
             case .none:
-                Text(model.codex.snapshot != nil ? s.connected : s.notConnected).foregroundStyle(.secondary)
+                Text(model.codex.status.snapshot != nil ? s.connected : s.notConnected).foregroundStyle(.secondary)
             }
             }
         }
@@ -162,7 +162,7 @@ struct SettingsView: View {
             HStack {
                 Text("Claude Code")
                 Spacer()
-                switch model.claudeLink {
+                switch model.claude.linkState {
                 case .linked:
                     Text(model.isActive(.claude) ? s.connected : s.pausedHidden).foregroundStyle(.secondary)
                     Button(s.disconnect) { unlink() }
@@ -172,10 +172,10 @@ struct SettingsView: View {
                     Button(s.connect) { confirmLink() }
                 }
             }
-            if model.claudeLink == .replacedByUser {
+            if model.claude.linkState == .replacedByUser {
                 Text(s.replacedByUser).font(.caption).foregroundStyle(.secondary)
             }
-            switch model.claudeAuth {
+            switch model.claude.auth {
             case .signedOut:
                 HStack {
                     Text(s.claudeNotSignedIn).font(.caption).foregroundStyle(.orange)
@@ -195,21 +195,21 @@ struct SettingsView: View {
             HStack {
                 Text("GitHub Actions")
                 Spacer()
-                if model.githubDeviceCode != nil {
-                    Button(s.cancel) { model.cancelGitHubConnect() }
-                } else if let login = model.githubLogin {
+                if model.github.deviceCode != nil {
+                    Button(s.cancel) { model.github.cancelConnect() }
+                } else if let login = model.github.login {
                     Text(model.isActive(.github) ? "\(s.connected) (\(login))" : s.pausedHidden).foregroundStyle(.secondary)
-                    Button(s.disconnect) { model.disconnectGitHub() }
+                    Button(s.disconnect) { model.github.disconnect() }
                 } else {
-                    Button(s.connectGitHub) { model.connectGitHub() }
+                    Button(s.connectGitHub) { model.github.connect() }
                 }
             }
-            if let code = model.githubDeviceCode {
+            if let code = model.github.deviceCode {
                 Text(s.githubEnterCode(code)).font(.caption.monospaced()).textSelection(.enabled)
-            } else if model.githubConnectError != nil {
+            } else if model.github.connectError != nil {
                 Text(s.linkFailed).font(.caption).foregroundStyle(.orange)
             }
-            if model.githubLogin != nil {
+            if model.github.login != nil {
                 HStack {
                     Text(s.monthlyBudget).font(.caption)
                     Spacer()
@@ -248,7 +248,7 @@ struct SettingsView: View {
         NSApp.activate(ignoringOtherApps: true)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         do {
-            try model.linkClaude()
+            try model.claude.link()
         } catch StatusLineLink.LinkError.settingsUnreadable, StatusLineLink.LinkError.settingsNotObject {
             linkError = s.settingsUnreadable
         } catch {
@@ -258,6 +258,6 @@ struct SettingsView: View {
 
     private func unlink() {
         linkError = nil
-        do { try model.unlinkClaude() } catch { linkError = s.linkFailed }
+        do { try model.claude.unlink() } catch { linkError = s.linkFailed }
     }
 }

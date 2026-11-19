@@ -8,19 +8,19 @@ enum GitHubDailyClient {
 
     struct Result { var amounts: [String: Double]; var included: Double }
 
-    static func read(days keys: [String]) async -> Swift.Result<Result, GitHubError> {
+    static func read(days keys: [String]) async -> Swift.Result<Result, ProviderError> {
         do {
-            guard let token = try await GitHubAuth.validAccessToken() else { return .failure(.notConnected) }
+            guard let token = try await GitHubAuth.validAccessToken() else { return .failure(.notSignedIn) }
             let (userData, userStatus) = try await GitHubAPI.get("/user", token: token)
             guard userStatus == 200, let user = (try? JSONSerialization.jsonObject(with: userData)) as? [String: Any],
-                  let login = user["login"] as? String else { return .failure(.failed) }
+                  let login = user["login"] as? String else { return .failure(.failed(nil)) }
             let plan = (user["plan"] as? [String: Any])?["name"] as? String
             guard let included = plan.flatMap({ GitHubActionsUsage.includedUSD[$0.lowercased()] }) else { return .failure(.unknownPlan) }
             let base = "/users/\(login)/settings/billing/usage/summary?product=Actions"
 
             @Sendable func amount(_ query: String) async throws -> Double {
                 let (d, s) = try await GitHubAPI.get(base + query, token: token)
-                guard s == 200 else { throw GitHubError.failed }
+                guard s == 200 else { throw ProviderError.failed(nil) }
                 return try GitHubActionsUsage.items(fromSummaryJSON: d).reduce(0) { $0 + $1.grossAmount }
             }
             @Sendable func encode(_ repo: String) -> String { repo.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? repo }
@@ -54,10 +54,10 @@ enum GitHubDailyClient {
                 return (key, max(0, total - parts.dropFirst().reduce(0, +)))
             }
             return .success(Result(amounts: Dictionary(uniqueKeysWithValues: perDay), included: included))
-        } catch let e as GitHubError {
+        } catch let e as ProviderError {
             return .failure(e)
         } catch {
-            return .failure(.failed)
+            return .failure(.failed(nil))
         }
     }
 }

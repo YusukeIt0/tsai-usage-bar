@@ -25,18 +25,18 @@ struct PopoverView: View {
                 notice
             }
 
-            if provider == .github, model.githubLogin != nil {
+            if provider == .github, model.github.login != nil {
                 Divider()
                 DailyChart(title: s.dailyMonthlyTitle, note: s.githubDailyNote,
-                           emptyText: model.githubDailyFailed && !model.githubDailyLoading ? s.fetchFailed : s.loading,
+                           emptyText: model.github.dailyFailed && !model.github.dailyLoading ? s.fetchFailed : s.loading,
                            strings: s, lang: settings.appLanguage, now: model.now) { end in
                     DailyChart.days(endingAt: end).map { d in
-                        (d, model.githubDaily.percent(DailyUsageLog.dayKey(d), budgetUSD: model.githubBudgetUSD))
+                        (d, model.github.daily.percent(DailyUsageLog.dayKey(d), budgetUSD: model.github.budgetUSD))
                     }
                 } earliest: {
                     GitHubDailyCache.utcKey(Date().addingTimeInterval(-728 * 86_400))
                 } onShow: { days in
-                    model.loadGitHubDays(days.map { DailyUsageLog.dayKey($0) })
+                    model.github.loadDays(days.map { DailyUsageLog.dayKey($0) })
                 }
             }
 
@@ -56,9 +56,9 @@ struct PopoverView: View {
                 Divider()
                 DailyChart(title: s.dailyWeeklyTitle, note: nil, emptyText: s.dailyNoData, strings: s,
                            lang: settings.appLanguage, now: model.now) { end in
-                    (model.daily[provider] ?? DailyUsageLog()).values(endingAt: end)
+                    (model.dailyLog(provider) ?? DailyUsageLog()).values(endingAt: end)
                 } earliest: {
-                    model.daily[provider]?.firstDay
+                    model.dailyLog(provider)?.firstDay
                 }
             }
 
@@ -134,13 +134,13 @@ struct PopoverView: View {
     private var budgetSplit: (free: Double, budget: Double)? {
         guard provider == .github, let w = status.snapshot?.windows[.month],
               case .value = model.display(ItemID(.github, .month)) else { return nil }
-        return BudgetBarSplit.parts(w, budgetUSD: model.githubBudgetUSD, mode: settings.displayMode)
+        return BudgetBarSplit.parts(w, budgetUSD: model.github.budgetUSD, mode: settings.displayMode)
     }
 
     /// With a budget: remaining/used of the budget alone, and the amount billed against it.
     @ViewBuilder
     private var budgetRow: some View {
-        if let budget = model.githubBudgetUSD, let w = status.snapshot?.windows[.month],
+        if let budget = model.github.budgetUSD, let w = status.snapshot?.windows[.month],
            let used = GitHubActionsUsage.budgetPercent(w, budgetUSD: budget), let charged = w.chargedAmount {
             let shown = settings.displayMode == .used ? used : 100 - used
             VStack(alignment: .leading, spacing: 4) {
@@ -159,7 +159,7 @@ struct PopoverView: View {
 
     /// "Free usage (private repos)", or with the budget the person entered.
     private var monthTitle: String {
-        guard let budget = model.githubBudgetUSD else { return s.privateFreeQuota }
+        guard let budget = model.github.budgetUSD else { return s.privateFreeQuota }
         return s.privateFreeQuotaWithBudget(USDText.format(budget))
     }
 
@@ -171,10 +171,10 @@ struct PopoverView: View {
             guard let e = status.lastError else { return nil }
             let message: String
             switch e {
-            case .notFound: message = s.codexNotFound
+            case .notInstalled: message = s.codexNotFound
             case .notSignedIn: message = s.codexNotSignedIn
             case .timedOut: message = s.fetchTimedOut
-            case .failed: message = s.fetchFailed
+            case .failed, .unknownPlan, .tooManyRepositories: message = s.fetchFailed
             }
             return AnyView(VStack(alignment: .leading, spacing: 6) {
                 Label(status.snapshot != nil ? "\(message) · \(s.showingLastValues)" : message,
@@ -182,19 +182,19 @@ struct PopoverView: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
                 if e == .notSignedIn {
-                    Button(model.codexSigningIn ? s.signingIn : s.signInCodex) { model.signInCodex() }
-                        .disabled(model.codexSigningIn)
+                    Button(model.codex.signingIn ? s.signingIn : s.signInCodex) { model.codex.signIn() }
+                        .disabled(model.codex.signingIn)
                         .controlSize(.small)
                 }
             })
         case .claude:
-            if model.claudeLink != .linked {
+            if model.claude.linkState != .linked {
                 return AnyView(VStack(alignment: .leading, spacing: 6) {
                     Label(s.claudeNotLinked, systemImage: "link").font(.caption).foregroundStyle(.secondary)
                     Button(s.connect) { openSettings() }.controlSize(.small)
                 })
             }
-            if model.claudeAuth == .signedOut {
+            if model.claude.auth == .signedOut {
                 return AnyView(VStack(alignment: .leading, spacing: 6) {
                     Label(s.claudeNotSignedIn, systemImage: "person.crop.circle.badge.exclamationmark")
                         .font(.caption).foregroundStyle(.orange)
@@ -214,18 +214,18 @@ struct PopoverView: View {
     private var githubNotice: some View {
         VStack(alignment: .leading, spacing: 6) {
             if case .value(let used, _) = model.display(ItemID(.github, .month)), used >= 100 {
-                Label(model.githubBudgetUSD == nil ? s.freeQuotaUsedUp : s.budgetUsedUp, systemImage: "exclamationmark.circle")
+                Label(model.github.budgetUSD == nil ? s.freeQuotaUsedUp : s.budgetUsedUp, systemImage: "exclamationmark.circle")
                     .font(.caption).foregroundStyle(.orange)
             }
-            switch model.githubError {
-            case .some(.notConnected):
+            switch model.github.status.lastError {
+            case .some(.notSignedIn):
                 Label(s.githubNotConnected, systemImage: "link").font(.caption).foregroundStyle(.secondary)
                 Button(s.connect) { openSettings() }.controlSize(.small)
             case .some(.unknownPlan):
                 Label(s.githubUnknownPlan, systemImage: "questionmark.circle").font(.caption).foregroundStyle(.secondary)
             case .some(.tooManyRepositories):
                 Label(s.githubTooManyRepos, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
-            case .some(.failed):
+            case .some(.failed), .some(.timedOut), .some(.notInstalled):
                 Label(status.snapshot != nil ? "\(s.fetchFailed) · \(s.showingLastValues)" : s.fetchFailed,
                       systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
             case .none:

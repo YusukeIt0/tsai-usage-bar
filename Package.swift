@@ -13,5 +13,7 @@ let package = Package(
         .executableTarget(name: "TSAIUsageBar", dependencies: ["UsageCore"]),
         .executableTarget(name: "tsai-usagebar-hook", dependencies: ["UsageCore"]),
         .testTarget(name: "UsageCoreTests", dependencies: ["UsageCore"]),
+        // App-level behaviour of the sources and the coordinator, with network calls replaced.
+        .testTarget(name: "TSAIUsageBarTests", dependencies: ["TSAIUsageBar", "UsageCore"]),
     ]
 )

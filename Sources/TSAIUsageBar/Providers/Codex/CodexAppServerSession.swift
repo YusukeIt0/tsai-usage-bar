@@ -1,13 +1,6 @@
 import Foundation
 import UsageCore
 
-enum CodexError: Error, Equatable {
-    case notFound
-    case notSignedIn
-    case timedOut
-    case failed(String)
-}
-
 /// Short-lived connection to the official `codex app-server` (JSON-RPC over stdio).
 /// Each call starts the server, performs the handshake, sends one request, and stops it.
 /// Only read requests and the official browser sign-in are used.
@@ -18,7 +11,7 @@ final class CodexAppServerSession: @unchecked Sendable {
     private let queue = DispatchQueue(label: "codex.app-server.session")
     private var buffer = Data()
     private var nextID = 1
-    private var waiters: [Int: (Result<[String: Any], CodexError>) -> Void] = [:]
+    private var waiters: [Int: (Result<[String: Any], ProviderError>) -> Void] = [:]
     private var notificationHandler: ((String, [String: Any]) -> Void)?
     private var closed = false
 
@@ -48,14 +41,14 @@ final class CodexAppServerSession: @unchecked Sendable {
         try process.run()
     }
 
-    func request(_ method: String, params: [String: Any]?, timeout: TimeInterval) async -> Result<[String: Any], CodexError> {
+    func request(_ method: String, params: [String: Any]?, timeout: TimeInterval) async -> Result<[String: Any], ProviderError> {
         await withCheckedContinuation { cont in
             queue.async {
                 if self.closed { cont.resume(returning: .failure(.failed("closed"))); return }
                 let id = self.nextID
                 self.nextID += 1
                 var once = false
-                let finish: (Result<[String: Any], CodexError>) -> Void = { r in
+                let finish: (Result<[String: Any], ProviderError>) -> Void = { r in
                     if once { return }
                     once = true
                     cont.resume(returning: r)
@@ -92,7 +85,7 @@ final class CodexAppServerSession: @unchecked Sendable {
     }
 
     /// Standard handshake: `initialize` then the `initialized` notification.
-    func initialize(timeout: TimeInterval) async -> Result<Void, CodexError> {
+    func initialize(timeout: TimeInterval) async -> Result<Void, ProviderError> {
         let params: [String: Any] = [
             "clientInfo": ["name": "tsai_usagebar", "title": "TSAI UsageBar", "version": AppInfo.version],
             "capabilities": ["experimentalApi": false, "requestAttestation": false,
@@ -140,13 +133,13 @@ final class CodexAppServerSession: @unchecked Sendable {
         }
     }
 
-    private func failAll(_ e: CodexError) {
+    private func failAll(_ e: ProviderError) {
         let ws = waiters
         waiters.removeAll()
         for (_, w) in ws { w(.failure(e)) }
     }
 
-    static func classify(_ message: String) -> CodexError {
+    static func classify(_ message: String) -> ProviderError {
         let m = message.lowercased()
         if m.contains("auth") || m.contains("login") || m.contains("sign in") || m.contains("unauthorized") {
             return .notSignedIn

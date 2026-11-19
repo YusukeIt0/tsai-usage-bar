@@ -775,3 +775,73 @@ final class BudgetBarSplitTests: XCTestCase {
         XCTAssertNil(BudgetBarSplit.parts(UsageWindow(usedPercent: 1, resetsAt: nil), budgetUSD: 10, mode: .used))
     }
 }
+
+final class ProviderStatusTests: XCTestCase {
+    func testFailureKeepsValuesAndMarksThemStale() {
+        var s = ProviderStatus()
+        let t0 = Date(timeIntervalSince1970: 1_000)
+        let snap = ProviderSnapshot(windows: [.sevenDay: UsageWindow(usedPercent: 40, resetsAt: nil)], fetchedAt: t0)
+        s.begin(at: t0)
+        XCTAssertTrue(s.isFetching)
+        XCTAssertEqual(s.lastAttempt, t0)
+        s.succeed(snap)
+        XCTAssertFalse(s.isFetching)
+        XCTAssertFalse(s.isStale)
+        s.fail(.timedOut)
+        s.fail(.failed("x"))
+        XCTAssertEqual(s.snapshot, snap)
+        XCTAssertTrue(s.isStale)
+        XCTAssertEqual(s.consecutiveFailures, 2)
+        s.succeed(snap)
+        XCTAssertEqual(s.consecutiveFailures, 0)
+        XCTAssertNil(s.lastError)
+        // An error without values is not "stale": there is nothing old to show.
+        XCTAssertFalse(ProviderStatus(lastError: .notSignedIn).isStale)
+    }
+
+    func testGitHubFetchPolicy() {
+        let p = GitHubFetchPolicy()
+        let t0 = Date(timeIntervalSince1970: 100_000)
+        XCTAssertTrue(p.shouldFetch(force: false, now: t0, lastAttempt: nil))
+        XCTAssertFalse(p.shouldFetch(force: false, now: t0, lastAttempt: t0 - 3599))
+        XCTAssertTrue(p.shouldFetch(force: false, now: t0, lastAttempt: t0 - 3600))
+        XCTAssertTrue(p.shouldFetch(force: true, now: t0, lastAttempt: t0 - 1))
+        XCTAssertFalse(p.shouldFetchOnPanelOpen(now: t0, lastAttempt: t0 - 600))
+        XCTAssertTrue(p.shouldFetchOnPanelOpen(now: t0, lastAttempt: t0 - 601))
+        XCTAssertTrue(p.shouldFetchOnPanelOpen(now: t0, lastAttempt: nil))
+        XCTAssertEqual(p.nextDelay(consecutiveFailures: 0), 3600)
+        XCTAssertEqual(p.nextDelay(consecutiveFailures: 2), 7200)
+        XCTAssertEqual(p.nextDelay(consecutiveFailures: 9), 14_400) // at most 4×
+    }
+
+    func testResetCreditTracker() throws {
+        let suite = "tsai-tests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let t = ResetCreditTracker(defaults: defaults)
+        XCTAssertNil(t.observe(nil))
+        XCTAssertNil(t.observe(ResetCredits(available: 1, earliestExpiry: nil))) // first value: baseline
+        XCTAssertEqual(t.observe(ResetCredits(available: 3, earliestExpiry: nil)), 2)
+        XCTAssertNil(t.observe(ResetCredits(available: 3, earliestExpiry: nil)))
+        XCTAssertNil(t.observe(ResetCredits(available: 0, earliestExpiry: nil))) // used up
+        // Kept across launches: a new tracker on the same defaults remembers the count.
+        XCTAssertEqual(ResetCreditTracker(defaults: defaults).observe(ResetCredits(available: 1, earliestExpiry: nil)), 1)
+    }
+
+    func testGitHubDailyCacheApplyAndStore() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let paths = AppPaths(supportDirectory: dir)
+        let now = ISO8601DateFormatter().date(from: "2026-11-19T12:00:00Z")!
+        var cache = GitHubDailyCache()
+        cache.amounts["2020-01-01"] = 1 // older than two years: pruned
+        cache.apply(amounts: ["2026-11-18": 0.5, "2026-11-19": 0.25], included: 18, now: now)
+        XCTAssertEqual(cache.includedAmount, 18)
+        XCTAssertEqual(cache.amounts, ["2026-11-18": 0.5, "2026-11-19": 0.25])
+        XCTAssertEqual(cache.fetchedAt["2026-11-19"], now)
+        try GitHubDailyStore.save(cache, paths: paths)
+        XCTAssertEqual(GitHubDailyStore.load(paths: paths), cache)
+        GitHubDailyStore.remove(paths: paths)
+        XCTAssertEqual(GitHubDailyStore.load(paths: paths), GitHubDailyCache())
+    }
+}
