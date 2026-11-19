@@ -82,7 +82,9 @@ struct PopoverView: View {
         let offered = status.snapshot?.offers(kind) ?? true
         VStack(alignment: .leading, spacing: 4) {
             HStack {
+                // Long titles (some languages, a budget) wrap instead of being cut off.
                 Text(kind == .month ? monthTitle : s.windowTitle(kind)).font(.subheadline.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 if let p = display.percent(mode: settings.displayMode) {
                     Text("\(p)%").font(.subheadline.monospacedDigit().weight(.semibold))
@@ -332,6 +334,7 @@ struct DailyChart: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text(title).font(.caption.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 Button { weeksBack += 1 } label: { Image(systemName: "chevron.left") }
                     .buttonStyle(.borderless).disabled(!canGoBack).help(strings.previousWeek)

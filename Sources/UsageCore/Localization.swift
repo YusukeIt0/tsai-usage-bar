@@ -304,9 +304,9 @@ public struct Strings: Sendable {
           "GitHub 집계는 몇 시간 늦을 수 있음", "Les totaux GitHub peuvent avoir quelques heures de retard", "GitHub-Summen können einige Stunden verzögert sein", "ยอดของ GitHub อาจช้าไม่กี่ชั่วโมง")
     }
     public func privateFreeQuotaWithBudget(_ amount: String) -> String {
-        fill(L("Free usage + %1 budget (private repos)", "無料枠＋予算%1（非公開リポジトリ）", "免費額度＋預算 %1（私人存放庫）",
-               "免费额度＋预算 %1（私有仓库）", "무료 사용량 + 예산 %1 (비공개 저장소)", "Utilisation gratuite + budget de %1 (dépôts privés)",
-               "Kostenloses Kontingent + Budget %1 (private Repos)", "โควตาฟรี + งบ %1 (รีโพส่วนตัว)"), amount)
+        fill(L("Free + %1 budget (private repos)", "無料枠＋予算%1（非公開リポジトリ）", "免費額度＋預算 %1（私人存放庫）",
+               "免费额度＋预算 %1（私有仓库）", "무료 + 예산 %1 (비공개 저장소)", "Gratuit + budget %1 (dépôts privés)",
+               "Gratis + Budget %1 (private Repos)", "ฟรี + งบ %1 (รีโพส่วนตัว)"), amount)
     }
     public func budgetRowTitle(_ amount: String) -> String {
         fill(L("Budget (%1)", "予算（%1）", "預算（%1）", "预算（%1）", "예산 (%1)", "Budget (%1)", "Budget (%1)", "งบ (%1)"), amount)

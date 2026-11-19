@@ -61,6 +61,8 @@ enum UIPreview {
         let settings = AppSettings(defaults: defaults)
         settings.enabledItems = [ItemID(.claude, .fiveHour), ItemID(.codex, .sevenDay)]
         let model = UsageModel()
+        // Optional sample budget for checking the budget rows: TSAI_PREVIEW_BUDGET=10
+        if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.githubBudgetUSD = b }
         let updates = UpdateChecker(defaults: defaults)
         for lang in AppLanguage.allCases {
             let setting = LanguageSetting.fixed(lang)
