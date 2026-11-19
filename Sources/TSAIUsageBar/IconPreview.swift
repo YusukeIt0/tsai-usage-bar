@@ -60,6 +60,8 @@ enum UIPreview {
         defaults.removePersistentDomain(forName: "tsai-usagebar-preview")
         let settings = AppSettings(defaults: defaults)
         settings.enabledItems = [ItemID(.claude, .fiveHour), ItemID(.codex, .sevenDay)]
+        // Optional: TSAI_PREVIEW_MODE=used renders the "used" display mode.
+        if ProcessInfo.processInfo.environment["TSAI_PREVIEW_MODE"] == "used" { settings.displayMode = .used }
         let model = UsageModel()
         // Optional sample budget for checking the budget rows: TSAI_PREVIEW_BUDGET=10
         if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.githubBudgetUSD = b }

@@ -92,8 +92,18 @@ struct PopoverView: View {
                     Text("—").foregroundStyle(.secondary)
                 }
             }
-            UsageBar(fraction: display.percent(mode: settings.displayMode).map { Double($0) / 100 })
-                .opacity(model.isStale(provider) ? 0.5 : 1)
+            if kind == .month, let split = budgetSplit {
+                // Free usage and budget in different colours, so the mix is visible at a glance.
+                SplitUsageBar(free: split.free, budget: split.budget)
+                    .opacity(model.isStale(provider) ? 0.5 : 1)
+                HStack(spacing: 10) {
+                    LegendDot(color: SplitUsageBar.freeColor, text: s.legendFree)
+                    LegendDot(color: SplitUsageBar.budgetColor, text: s.legendBudget)
+                }
+            } else {
+                UsageBar(fraction: display.percent(mode: settings.displayMode).map { Double($0) / 100 })
+                    .opacity(model.isStale(provider) ? 0.5 : 1)
+            }
             Group {
                 switch display {
                 case .value(_, let reset):
@@ -120,6 +130,13 @@ struct PopoverView: View {
                            remaining: tt.duration(remaining))
     }
 
+    /// Free and budget parts of the GitHub month bar, when a budget is set.
+    private var budgetSplit: (free: Double, budget: Double)? {
+        guard provider == .github, let w = status.snapshot?.windows[.month],
+              case .value = model.display(ItemID(.github, .month)) else { return nil }
+        return BudgetBarSplit.parts(w, budgetUSD: model.githubBudgetUSD, mode: settings.displayMode)
+    }
+
     /// With a budget: remaining/used of the budget alone, and the amount billed against it.
     @ViewBuilder
     private var budgetRow: some View {
@@ -132,7 +149,7 @@ struct PopoverView: View {
                     Spacer()
                     Text("\(Int(shown.rounded()))%").font(.subheadline.monospacedDigit().weight(.semibold))
                 }
-                UsageBar(fraction: shown / 100)
+                UsageBar(fraction: shown / 100, color: SplitUsageBar.budgetColor) // same colour as the budget part
                     .opacity(model.isStale(.github) ? 0.5 : 1)
                 Text(s.budgetSpent(USDText.money(charged), USDText.format(budget)))
                     .font(.caption).foregroundStyle(.secondary)
@@ -246,13 +263,14 @@ struct PopoverView: View {
 /// Horizontal bar. Nil shows an empty track (no guessed value).
 struct UsageBar: View {
     let fraction: Double?
+    var color: Color? = nil
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.primary.opacity(0.12))
                 if let fraction {
-                    Capsule().fill(Color.primary.opacity(0.75))
+                    Capsule().fill(color.map { $0.opacity(0.85) } ?? Color.primary.opacity(0.75))
                         .frame(width: max(fraction > 0 ? 4 : 0, geo.size.width * min(1, max(0, fraction))))
                 }
             }
@@ -389,5 +407,39 @@ struct DailyChart: View {
     private func rangeText(_ a: Date, _ b: Date) -> String {
         let f = formatter("Md")
         return "\(f.string(from: a))–\(f.string(from: b))"
+    }
+}
+
+/// A bar with two coloured parts from the left: free usage, then budget.
+struct SplitUsageBar: View {
+    let free: Double
+    let budget: Double
+    static let freeColor = Color.blue
+    static let budgetColor = Color.orange
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.primary.opacity(0.12))
+                HStack(spacing: 0) {
+                    Rectangle().fill(Self.freeColor.opacity(0.85)).frame(width: w * min(1, max(0, free)))
+                    Rectangle().fill(Self.budgetColor.opacity(0.85)).frame(width: w * min(1, max(0, budget)))
+                }
+                .clipShape(Capsule())
+            }
+        }
+        .frame(height: 8)
+    }
+}
+
+struct LegendDot: View {
+    let color: Color
+    let text: String
+    var body: some View {
+        HStack(spacing: 4) {
+            RoundedRectangle(cornerRadius: 2).fill(color.opacity(0.85)).frame(width: 8, height: 8)
+            Text(text).font(.caption2).foregroundStyle(.secondary)
+        }
     }
 }

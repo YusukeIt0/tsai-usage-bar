@@ -666,3 +666,29 @@ final class GitHubBudgetRowTests: XCTestCase {
         XCTAssertNil(GitHubActionsUsage.budgetPercent(w, budgetUSD: 20)) // older snapshot: re-read first
     }
 }
+
+final class BudgetBarSplitTests: XCTestCase {
+    let w = UsageWindow(usedPercent: 100, resetsAt: nil, usedAmount: 21.45, includedAmount: 18)
+
+    func testUsedAndRemainingSplit() {
+        // 18 free + 10 budget = 28. Used 21.45: all 18 free, 3.45 of the budget.
+        let used = BudgetBarSplit.parts(w, budgetUSD: 10, mode: .used)!
+        XCTAssertEqual(used.free, 18 / 28, accuracy: 0.0001)
+        XCTAssertEqual(used.budget, 3.45 / 28, accuracy: 0.0001)
+        let left = BudgetBarSplit.parts(w, budgetUSD: 10, mode: .remaining)!
+        XCTAssertEqual(left.free, 0, accuracy: 0.0001)
+        XCTAssertEqual(left.budget, 6.55 / 28, accuracy: 0.0001)
+        XCTAssertEqual(used.free + used.budget + left.free + left.budget, 1, accuracy: 0.0001)
+    }
+
+    func testWithinFreeUsageAndEdges() {
+        let early = UsageWindow(usedPercent: 25, resetsAt: nil, usedAmount: 7, includedAmount: 18)
+        let used = BudgetBarSplit.parts(early, budgetUSD: 10, mode: .used)!
+        XCTAssertEqual(used.free, 0.25, accuracy: 0.0001)
+        XCTAssertEqual(used.budget, 0)
+        let over = UsageWindow(usedPercent: 100, resetsAt: nil, usedAmount: 40, includedAmount: 18)
+        XCTAssertEqual(BudgetBarSplit.parts(over, budgetUSD: 10, mode: .used)!.budget, 10 / 28, accuracy: 0.0001) // capped
+        XCTAssertNil(BudgetBarSplit.parts(w, budgetUSD: nil, mode: .used))
+        XCTAssertNil(BudgetBarSplit.parts(UsageWindow(usedPercent: 1, resetsAt: nil), budgetUSD: 10, mode: .used))
+    }
+}

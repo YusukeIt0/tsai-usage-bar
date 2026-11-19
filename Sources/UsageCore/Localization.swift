@@ -308,6 +308,8 @@ public struct Strings: Sendable {
                "免费额度＋预算 %1（私有仓库）", "무료 + 예산 %1 (비공개 저장소)", "Gratuit + budget %1 (dépôts privés)",
                "Gratis + Budget %1 (private Repos)", "ฟรี + งบ %1 (รีโพส่วนตัว)"), amount)
     }
+    public var legendFree: String { L("Free", "無料枠", "免費額度", "免费额度", "무료", "Gratuit", "Gratis", "ฟรี") }
+    public var legendBudget: String { L("Budget", "予算", "預算", "预算", "예산", "Budget", "Budget", "งบ") }
     public func budgetRowTitle(_ amount: String) -> String {
         fill(L("Budget (%1)", "予算（%1）", "預算（%1）", "预算（%1）", "예산 (%1)", "Budget (%1)", "Budget (%1)", "งบ (%1)"), amount)
     }
