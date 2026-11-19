@@ -109,7 +109,20 @@ swift scripts/make-icon.swift # regenerate the app icon from Resources/icon/surf
 
 Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application identity to sign; otherwise builds are ad-hoc signed.
 
-CI runs the unit tests, builds the app exactly as released, and checks the language files inside the built app.
+CI runs the tests (the core logic, and each service's source with network calls replaced), builds the app exactly as released, and checks the language files inside the built app.
+
+To check the real services by hand, `"dist/TSAI UsageBar.app/Contents/MacOS/TSAIUsageBar" --check-sources` reads each one once (the same read-only requests the app makes) and prints what it got. Set `TSAI_USAGEBAR_SUPPORT_DIR` to a scratch folder to keep its stored values away from your installed app.
+
+### Code layout
+
+| Folder | Contents |
+|---|---|
+| `Sources/UsageCore` | Platform-independent logic: parsing, display rules, schedules, storage, languages. Unit-tested |
+| `Sources/TSAIUsageBar/Providers/<Service>` | Everything for one service: its source (when and how it is read), client, and its panel and Settings views |
+| `Sources/TSAIUsageBar/Model` | `UsageModel`, which forwards app-wide events to each source, and the `UsageSource` protocol |
+| `Sources/TSAIUsageBar/App`, `Views`, `Support` | App entry, menu bar and windows; shared views; developer aids |
+| `Sources/tsai-usagebar-hook` | The Claude Code statusLine relay |
+| `Resources/Languages` | One JSON file per language |
 
 ### Adding a language
 
