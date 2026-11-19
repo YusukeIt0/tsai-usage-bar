@@ -9,8 +9,13 @@ concurrency:
 jobs:
   test:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: swift test
+      - name: Unit tests (includes language file checks)
+        run: swift test
+      - name: Build the app as released
+        run: scripts/build-app.sh 0.0.0-ci
+      - name: Check the language files inside the built app
+        run: '"dist/TSAI UsageBar.app/Contents/MacOS/TSAIUsageBar" --check-languages'
       - run: sh -n install.sh

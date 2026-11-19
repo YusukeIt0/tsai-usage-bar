@@ -28,7 +28,7 @@ final class AppSettings: ObservableObject {
         let keys = defaults.stringArray(forKey: "enabledItems")
         enabledItems = Set((keys ?? []).compactMap { k in ItemID.allCases.first { $0.key == k } })
         displayMode = DisplayMode(rawValue: defaults.string(forKey: "displayMode") ?? "") ?? .remaining
-        language = LanguageSetting(storedValue: defaults.string(forKey: "language") ?? "") ?? .automatic
+        language = LanguageSetting(storedValue: defaults.string(forKey: "language") ?? "")
         initializedProviders = Set((defaults.stringArray(forKey: "initializedProviders") ?? [])
             .compactMap(Provider.init(rawValue:)))
         notifyResetCredits = defaults.bool(forKey: "notifyResetCredits")
@@ -36,7 +36,7 @@ final class AppSettings: ObservableObject {
         githubBudgetUSD = budget > 0 ? budget : nil
     }
 
-    var appLanguage: AppLanguage { AppLanguage.resolve(language) }
+    var appLanguage: AppLanguage { LanguageCatalog.main.resolve(language) }
     var strings: Strings { Strings(appLanguage) }
 
     private func save() {
