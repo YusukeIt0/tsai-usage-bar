@@ -53,6 +53,22 @@ public enum GitHubActionsUsage {
     }
 
     /// Builds the monthly window: used percent of the plan's included compute.
+    /// The month's billed amount beyond free usage for Actions (all SKUs), from `netAmount`.
+    public static func chargedAmount(fromSummaryJSON data: Data) -> Double? {
+        guard let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let raw = obj["usageItems"] as? [[String: Any]] else { return nil }
+        return raw.reduce(0) { sum, it in
+            guard (it["product"] as? String)?.lowercased() ?? "actions" == "actions" else { return sum }
+            return sum + (doubleValue(it["netAmount"]) ?? 0)
+        }
+    }
+
+    /// Share of the person's budget spent, from the billed amount. Nil without both values.
+    public static func budgetPercent(_ window: UsageWindow, budgetUSD: Double?) -> Double? {
+        guard let budget = budgetUSD, budget > 0, let charged = window.chargedAmount else { return nil }
+        return min(100, max(0, charged / budget * 100))
+    }
+
     public static func window(plan: String?, total: [Item], publicRepos: [[Item]], now: Date) throws -> UsageWindow {
         guard let plan, let included = includedUSD[plan.lowercased()], included > 0 else {
             throw Failure.unknownPlan(plan)

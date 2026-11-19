@@ -73,6 +73,9 @@ public struct UsageWindow: Codable, Equatable, Sendable {
     /// Kept so the percent can be recomputed when the person changes their budget.
     public var usedAmount: Double?
     public var includedAmount: Double?
+    /// GitHub Actions only: the amount billed beyond the free usage this month (USD),
+    /// i.e. what a budget is spent on, from GitHub's own `netAmount`.
+    public var chargedAmount: Double?
 
     public init(usedPercent: Double, resetsAt: Date?, observedAt: Date? = nil,
                 usedAmount: Double? = nil, includedAmount: Double? = nil) {

@@ -44,7 +44,8 @@ final class UsageModel: ObservableObject {
     @Published var githubBudgetUSD: Double? {
         didSet {
             // Values saved by 0.1.6 have no amounts; read again so the budget can apply.
-            if githubBudgetUSD != nil, github.snapshot?.windows[.month]?.usedAmount == nil { refreshGitHub(force: true) }
+            let w = github.snapshot?.windows[.month]
+            if githubBudgetUSD != nil, w?.usedAmount == nil || w?.chargedAmount == nil { refreshGitHub(force: true) }
         }
     }
     private var githubTimer: Timer?

@@ -19,6 +19,7 @@ struct PopoverView: View {
             ForEach(provider.windows, id: \.self) { kind in
                 windowRow(kind)
             }
+            if provider == .github { budgetRow }
 
             if let notice = noticeText {
                 notice
@@ -115,6 +116,26 @@ struct PopoverView: View {
         let remaining = date.timeIntervalSince(model.now)
         return s.resetLine(tt.reset(date, now: model.now),
                            remaining: tt.duration(remaining))
+    }
+
+    /// With a budget: remaining/used of the budget alone, and the amount billed against it.
+    @ViewBuilder
+    private var budgetRow: some View {
+        if let budget = model.githubBudgetUSD, let w = status.snapshot?.windows[.month],
+           let used = GitHubActionsUsage.budgetPercent(w, budgetUSD: budget), let charged = w.chargedAmount {
+            let shown = settings.displayMode == .used ? used : 100 - used
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(s.budgetRowTitle(USDText.format(budget))).font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Text("\(Int(shown.rounded()))%").font(.subheadline.monospacedDigit().weight(.semibold))
+                }
+                UsageBar(fraction: shown / 100)
+                    .opacity(model.isStale(.github) ? 0.5 : 1)
+                Text(s.budgetSpent(USDText.money(charged), USDText.format(budget)))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
     }
 
     /// "Free usage (private repos)", or with the budget the person entered.
@@ -274,6 +295,9 @@ enum USDText {
         f.maximumFractionDigits = 2
         return "$" + (f.string(from: NSNumber(value: value)) ?? String(value))
     }
+
+    /// Money with cents: "$3.30".
+    static func money(_ value: Double) -> String { String(format: "$%.2f", value) }
 }
 
 /// Seven bars, one per local day, with buttons to step back and forward a week.
