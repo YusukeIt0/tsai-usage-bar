@@ -79,6 +79,7 @@
     "budgetUsedUp": "Kuota gratis dan anggaran habis",
     "monthlyBudget": "Anggaran Actions bulanan (opsional)",
     "budgetHelp": "Jumlah yang sama dengan anggaran Actions Anda di GitHub. Kosongkan jika tidak ada.",
+    "setBudgetOnGitHub": "Atur anggaran di GitHub",
     "freeQuotaUsedUp": "Kuota gratis habis",
     "githubNotConnected": "Belum terhubung ke GitHub",
     "connectGitHub": "Hubungkan GitHub",

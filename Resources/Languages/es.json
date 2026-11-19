@@ -78,6 +78,7 @@
     "budgetUsedUp": "Uso gratuito y presupuesto agotados",
     "monthlyBudget": "Presupuesto mensual de Actions (opcional)",
     "budgetHelp": "El mismo importe que tu presupuesto de Actions en GitHub. Déjalo vacío si no tienes.",
+    "setBudgetOnGitHub": "Definir presupuesto en GitHub",
     "freeQuotaUsedUp": "Uso gratuito agotado",
     "githubNotConnected": "No conectado a GitHub",
     "connectGitHub": "Conectar GitHub",

@@ -78,6 +78,7 @@
     "budgetUsedUp": "ใช้โควตาฟรีและงบหมดแล้ว",
     "monthlyBudget": "งบ Actions รายเดือน (ไม่บังคับ)",
     "budgetHelp": "จำนวนเดียวกับงบ Actions ที่ตั้งไว้ใน GitHub เว้นว่างไว้หากไม่ได้ตั้ง",
+    "setBudgetOnGitHub": "ตั้งงบบน GitHub",
     "freeQuotaUsedUp": "ใช้โควตาฟรีหมดแล้ว",
     "githubNotConnected": "ยังไม่ได้เชื่อมต่อกับ GitHub",
     "connectGitHub": "เชื่อมต่อ GitHub",

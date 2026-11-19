@@ -10,7 +10,7 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 <p>
   <img src="docs/images/popover-claude.png" alt="Claude Code panel with 5-hour and 7-day bars and reset times" width="280">
   <img src="docs/images/popover-codex.png" alt="Codex panel" width="280">
-  <img src="docs/images/popover-github.png" alt="GitHub Actions panel: a free-plus-budget bar split into blue (free) and orange (budget), the budget on its own and the amount spent" width="280">
+  <img src="docs/images/popover-github.png" alt="GitHub Actions panel: a free-plus-budget bar split into blue (free) and orange (budget), the budget on its own, the amount spent and a Set budget on GitHub button" width="280">
 </p>
 
 <sub>In these screenshots the Claude Code and Codex daily bars and the $10 GitHub budget are sample values; all other numbers are real.</sub>
@@ -76,7 +76,7 @@ curl -fsSL https://raw.githubusercontent.com/YusukeIt0/tsai-usage-bar/main/insta
 
 - Standard runners on public repositories are free with no limit, so `M` shows the monthly included usage that private repositories consume (Free: 12 USD, Pro: 18 USD of compute; other plans show "—").
 - It resets at 00:00 UTC on the 1st. GitHub's totals can lag by a few hours.
-- **Budget (optional):** if you set an Actions budget on GitHub, enter the same amount under **Monthly Actions budget** in Settings (GitHub has no public API for personal budgets). `M` then measures against the free usage plus the budget, which is how much is left before Actions stops. In the panel, that bar is split by colour, blue for free usage and orange for budget, so you can see the mix without reading numbers. Below it, the budget on its own (remaining or used, orange) and the amount spent against it this month, which is GitHub's own billed figure.
+- **Budget (optional):** if you set an Actions budget on GitHub, enter the same amount under **Monthly Actions budget** in Settings (GitHub has no public API for personal budgets). `M` then measures against the free usage plus the budget, which is how much is left before Actions stops. In the panel, that bar is split by colour, blue for free usage and orange for budget, so you can see the mix without reading numbers. Below it, the budget on its own (remaining or used, orange) and the amount spent against it this month, which is GitHub's own billed figure. **Set budget on GitHub** in the panel opens GitHub's *Budgets and alerts* page.
 - **Disconnect** forgets the token on this Mac; revoke the authorization anytime under GitHub → Settings → Applications.
 
 ## How it gets data

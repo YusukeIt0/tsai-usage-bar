@@ -281,6 +281,7 @@ public enum StringKey: String, CaseIterable, Sendable {
     case budgetUsedUp
     case monthlyBudget
     case budgetHelp
+    case setBudgetOnGitHub
     case freeQuotaUsedUp
     case githubNotConnected
     case connectGitHub
@@ -404,6 +405,7 @@ public struct Strings: Sendable {
     public var budgetUsedUp: String { t(.budgetUsedUp) }
     public var monthlyBudget: String { t(.monthlyBudget) }
     public var budgetHelp: String { t(.budgetHelp) }
+    public var setBudgetOnGitHub: String { t(.setBudgetOnGitHub) }
     public var freeQuotaUsedUp: String { t(.freeQuotaUsedUp) }
     public var githubNotConnected: String { t(.githubNotConnected) }
     public var connectGitHub: String { t(.connectGitHub) }

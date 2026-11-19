@@ -78,6 +78,7 @@
     "budgetUsedUp": "Бесплатный лимит и бюджет исчерпаны",
     "monthlyBudget": "Месячный бюджет Actions (необязательно)",
     "budgetHelp": "Та же сумма, что и бюджет Actions на GitHub. Оставьте пустым, если бюджета нет.",
+    "setBudgetOnGitHub": "Задать бюджет на GitHub",
     "freeQuotaUsedUp": "Бесплатный лимит исчерпан",
     "githubNotConnected": "Не подключено к GitHub",
     "connectGitHub": "Подключить GitHub",

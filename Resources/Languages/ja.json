@@ -78,6 +78,7 @@
     "budgetUsedUp": "無料枠と予算を使い切りました",
     "monthlyBudget": "Actionsの月の予算（任意）",
     "budgetHelp": "GitHubで設定したActionsの予算と同じ額。設定していなければ空欄のまま。",
+    "setBudgetOnGitHub": "GitHubで予算を設定",
     "freeQuotaUsedUp": "無料枠を使い切りました",
     "githubNotConnected": "GitHubと未連携",
     "connectGitHub": "GitHubと連携",
