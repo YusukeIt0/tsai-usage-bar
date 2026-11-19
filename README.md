@@ -10,7 +10,7 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 <p>
   <img src="docs/images/popover-claude.png" alt="Claude Code panel with 5-hour and 7-day bars and reset times" width="280">
   <img src="docs/images/popover-codex.png" alt="Codex panel" width="280">
-  <img src="docs/images/popover-github.png" alt="GitHub Actions panel: a free-plus-budget bar split into blue (free) and orange (budget), the budget on its own and the amount spent" width="280">
+  <img src="docs/images/popover-github.png" alt="GitHub Actions panel: a free-plus-budget bar split into blue (free) and orange (budget), the budget on its own, the amount spent and a Set budget on GitHub button" width="280">
 </p>
 
 <sub>In these screenshots the Claude Code and Codex daily bars and the $10 GitHub budget are sample values; all other numbers are real.</sub>
