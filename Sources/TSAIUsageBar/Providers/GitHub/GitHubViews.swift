@@ -101,6 +101,10 @@ struct GitHubPanel: View {
             case .none:
                 EmptyView()
             }
+            if source.login != nil {
+                Button(s.setBudgetOnGitHub) { NSWorkspace.shared.open(GitHubSource.budgetsURL) }
+                    .controlSize(.small)
+            }
             Text("\(s.publicReposFree)\n\(s.githubDelay)").font(.caption2).foregroundStyle(.secondary)
         }
     }

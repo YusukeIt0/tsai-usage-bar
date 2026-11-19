@@ -9,6 +9,8 @@ final class GitHubSource: ObservableObject, UsageSource {
     typealias DailyReader = @Sendable ([String]) async -> Result<GitHubDailyClient.Result, ProviderError>
 
     let provider = Provider.github
+    /// GitHub's "Budgets and alerts" page for the signed-in personal account.
+    static let budgetsURL = URL(string: "https://github.com/settings/billing/budgets")!
     @Published private(set) var status = ProviderStatus()
     @Published private(set) var login: String?
     /// Shown while connecting: the code the person enters in the browser.

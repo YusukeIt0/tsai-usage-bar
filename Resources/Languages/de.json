@@ -78,6 +78,7 @@
     "budgetUsedUp": "Kostenloses Kontingent und Budget aufgebraucht",
     "monthlyBudget": "Monatliches Actions-Budget (optional)",
     "budgetHelp": "Gleicher Betrag wie das Actions-Budget auf GitHub. Leer lassen, wenn keines festgelegt ist.",
+    "setBudgetOnGitHub": "Budget auf GitHub festlegen",
     "freeQuotaUsedUp": "Kostenloses Kontingent aufgebraucht",
     "githubNotConnected": "Nicht mit GitHub verbunden",
     "connectGitHub": "Mit GitHub verbinden",

@@ -79,6 +79,7 @@
     "budgetUsedUp": "Đã dùng hết phần miễn phí và ngân sách",
     "monthlyBudget": "Ngân sách Actions hằng tháng (tùy chọn)",
     "budgetHelp": "Bằng số tiền ngân sách Actions của bạn trên GitHub. Để trống nếu không có.",
+    "setBudgetOnGitHub": "Đặt ngân sách trên GitHub",
     "freeQuotaUsedUp": "Đã dùng hết phần miễn phí",
     "githubNotConnected": "Chưa kết nối với GitHub",
     "connectGitHub": "Kết nối GitHub",

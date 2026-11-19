@@ -79,6 +79,7 @@
     "budgetUsedUp": "免费额度和预算已用完",
     "monthlyBudget": "Actions 每月预算（可选）",
     "budgetHelp": "与你在 GitHub 设置的 Actions 预算相同。未设置则留空。",
+    "setBudgetOnGitHub": "在 GitHub 设置预算",
     "freeQuotaUsedUp": "免费额度已用完",
     "githubNotConnected": "尚未关联 GitHub",
     "connectGitHub": "关联 GitHub",
