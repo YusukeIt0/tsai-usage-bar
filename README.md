@@ -109,6 +109,24 @@ swift scripts/make-icon.swift # regenerate the app icon from Resources/icon/surf
 
 Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application identity to sign; otherwise builds are ad-hoc signed.
 
+CI runs the unit tests, builds the app exactly as released, and checks the language files inside the built app.
+
+### Adding a language
+
+Each language is one file, `Resources/Languages/<code>.json`; nothing in the code lists languages. To add one, copy `en.json` and change:
+
+| Field | Meaning |
+|---|---|
+| `code` | Same as the file name; also the value saved in Settings |
+| `name` | The language's own name, shown in the language picker |
+| `locale` | Locale for dates and durations, for example `vi_VN` |
+| `order` | Position in the language picker |
+| `matches` | macOS language tags it serves. The pattern with the most parts wins (`zh-tw` over `zh`), and `pt` serves every Portuguese |
+| `durationStyle` | Optional. `short` when the abbreviated style reads badly (Vietnamese) |
+| `strings` | Every key in `en.json`. Keep each `{placeholder}` unchanged |
+
+`swift test` fails if a file misses a key, has empty text, changes a placeholder, or claims a tag another language already serves. Check the layout with `"dist/TSAI UsageBar.app/Contents/MacOS/TSAIUsageBar" --render-ui <folder>` (panels in every language) and add the language to the list under **What it shows**.
+
 ## License
 
 MIT

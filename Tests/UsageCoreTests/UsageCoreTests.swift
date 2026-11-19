@@ -210,63 +210,135 @@ final class FetchPolicyTests: XCTestCase {
     }
 }
 
+/// The real language files in `Resources/Languages`.
+enum TestLanguages {
+    static let directory = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("Resources/Languages")
+    static let catalog: LanguageCatalog = {
+        do { return try LanguageCatalog.load(directory: directory) } catch { fatalError("language files: \(error)") }
+    }()
+    static func lang(_ code: String) -> AppLanguage {
+        guard let l = catalog.language(code: code) else { fatalError("no language \(code)") }
+        return l
+    }
+}
+
 final class LocalizationTests: XCTestCase {
+    let c = TestLanguages.catalog
+    func L(_ code: String) -> AppLanguage { TestLanguages.lang(code) }
+
+    /// The check CI relies on: every file has every key, non-empty text and the same
+    /// placeholders as English, and its code matches the file name.
+    func testLanguageFilesAreComplete() {
+        XCTAssertEqual(LanguageCatalog.problems(directory: TestLanguages.directory), [])
+    }
+
+    func testProblemsAreReported() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let en = try Data(contentsOf: TestLanguages.directory.appendingPathComponent("en.json"))
+        try en.write(to: dir.appendingPathComponent("en.json"))
+        var obj = try XCTUnwrap(try JSONSerialization.jsonObject(with: en) as? [String: Any])
+        var strings = try XCTUnwrap(obj["strings"] as? [String: String])
+        strings["settings"] = nil                                  // missing key
+        strings["lastUpdated"] = "Updated {when}"                  // wrong placeholder
+        strings["quit"] = " "                                      // empty
+        strings["extra"] = "x"                                     // unknown key
+        obj["strings"] = strings
+        obj["code"] = "xx"
+        obj["matches"] = ["en"]                                    // already English's
+        try JSONSerialization.data(withJSONObject: obj).write(to: dir.appendingPathComponent("xx.json"))
+        let problems = LanguageCatalog.problems(directory: dir).joined(separator: "\n")
+        for expected in ["missing \"settings\"", "\"lastUpdated\" has placeholders", "\"quit\" is empty",
+                         "unknown key \"extra\"", "match \"en\" is also used by"] {
+            XCTAssertTrue(problems.contains(expected), expected)
+        }
+        // A file named differently from its code.
+        try FileManager.default.moveItem(at: dir.appendingPathComponent("xx.json"), to: dir.appendingPathComponent("yy.json"))
+        XCTAssertTrue(LanguageCatalog.problems(directory: dir).joined().contains("does not match the file name"))
+    }
+
+    func testMissingKeysFallBackToEnglish() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data(contentsOf: TestLanguages.directory.appendingPathComponent("en.json")).write(to: dir.appendingPathComponent("en.json"))
+        let partial = #"{"code":"xx","name":"X","locale":"en","order":99,"matches":["xx"],"strings":{"quit":"Q"}}"#
+        try Data(partial.utf8).write(to: dir.appendingPathComponent("xx.json"))
+        try Data([0, 5, 22, 7]).write(to: dir.appendingPathComponent("._xx.json")) // AppleDouble leftover
+        let catalog = try LanguageCatalog.load(directory: dir)
+        XCTAssertEqual(LanguageCatalog.problems(directory: dir).filter { $0.contains("cannot read") }, [])
+        let s = Strings(try XCTUnwrap(catalog.language(code: "xx")))
+        XCTAssertEqual(s.quit, "Q")
+        XCTAssertEqual(s.settings, "Settings")
+        XCTAssertEqual(catalog.languages.map(\.code), ["en", "xx"])
+    }
+
     func testAutomaticLanguage() {
         let auto = LanguageSetting.automatic
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ja-JP", "en-US"]), .ja)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["en-GB"]), .en)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["th-TH", "ja-JP"]), .th)
+        func r(_ preferred: [String]) -> String { c.resolve(auto, preferred: preferred).code }
+        XCTAssertEqual(r(["ja-JP", "en-US"]), "ja")
+        XCTAssertEqual(r(["en-GB"]), "en")
+        XCTAssertEqual(r(["th-TH", "ja-JP"]), "th")
         // The first supported preference wins; unsupported ones are skipped.
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["nl-NL", "de-DE", "ja-JP"]), .de)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["nl-NL", "sv-SE"]), .en)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: []), .en)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["fr-CA"]), .fr)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ko-KR"]), .ko)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["pt-BR"]), .ptBR)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["pt-PT"]), .ptBR)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["id-ID"]), .id)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["in"]), .id)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-MX"]), .es)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-419"]), .es)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ru-KZ"]), .ru)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["vi-VN"]), .vi)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["uk-UA", "ru-RU"]), .ru) // first supported wins
+        XCTAssertEqual(r(["nl-NL", "de-DE", "ja-JP"]), "de")
+        XCTAssertEqual(r(["nl-NL", "sv-SE"]), "en")
+        XCTAssertEqual(r([]), "en")
+        XCTAssertEqual(r(["fr-CA"]), "fr")
+        XCTAssertEqual(r(["ko-KR"]), "ko")
+        XCTAssertEqual(r(["pt-BR"]), "pt-br")
+        XCTAssertEqual(r(["pt-PT"]), "pt-br")
+        XCTAssertEqual(r(["id-ID"]), "id")
+        XCTAssertEqual(r(["in"]), "id")
+        XCTAssertEqual(r(["es-MX"]), "es")
+        XCTAssertEqual(r(["es-419"]), "es")
+        XCTAssertEqual(r(["ru-KZ"]), "ru")
+        XCTAssertEqual(r(["vi-VN"]), "vi")
+        XCTAssertEqual(r(["uk-UA", "ru-RU"]), "ru") // first supported wins
         // Chinese: explicit script first, then region.
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hant-HK"]), .zhHant)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hans-TW"]), .zhHans)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-TW"]), .zhHant)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-MO"]), .zhHant)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-CN"]), .zhHans)
-        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh"]), .zhHans)
-        XCTAssertEqual(AppLanguage.resolve(.fixed(.ja), preferred: ["en"]), .ja)
+        XCTAssertEqual(r(["zh-Hant-HK"]), "zh-hant")
+        XCTAssertEqual(r(["zh-Hans-TW"]), "zh-hans")
+        XCTAssertEqual(r(["zh-Hant"]), "zh-hant")
+        XCTAssertEqual(r(["zh-TW"]), "zh-hant")
+        XCTAssertEqual(r(["zh-HK"]), "zh-hant")
+        XCTAssertEqual(r(["zh-MO"]), "zh-hant")
+        XCTAssertEqual(r(["zh-CN"]), "zh-hans")
+        XCTAssertEqual(r(["zh"]), "zh-hans")
+        XCTAssertEqual(r(["zh_TW"]), "zh-hant")
+        XCTAssertEqual(c.resolve(.fixed("ja"), preferred: ["en"]).code, "ja")
+        // A fixed language without a file acts as automatic.
+        XCTAssertEqual(c.resolve(.fixed("nl"), preferred: ["de-DE"]).code, "de")
     }
 
     func testSettingStorageAndMigration() {
-        XCTAssertEqual(LanguageSetting(storedValue: "japanese"), .fixed(.ja)) // 0.1.x value
-        XCTAssertEqual(LanguageSetting(storedValue: "english"), .fixed(.en))
+        XCTAssertEqual(LanguageSetting(storedValue: "japanese"), .fixed("ja")) // 0.1.x value
+        XCTAssertEqual(LanguageSetting(storedValue: "english"), .fixed("en"))
         XCTAssertEqual(LanguageSetting(storedValue: "automatic"), .automatic)
-        XCTAssertEqual(LanguageSetting(storedValue: "zh-hant"), .fixed(.zhHant))
-        XCTAssertNil(LanguageSetting(storedValue: "nl"))
-        for s in LanguageSetting.allCases { XCTAssertEqual(LanguageSetting(storedValue: s.storedValue), s) }
-        XCTAssertEqual(LanguageSetting.allCases.count, 14)
-        XCTAssertEqual(AppLanguage.allCases.map(\.rawValue),
+        XCTAssertEqual(LanguageSetting(storedValue: ""), .automatic)
+        XCTAssertEqual(LanguageSetting(storedValue: "zh-hant"), .fixed("zh-hant"))
+        for s in c.settings { XCTAssertEqual(LanguageSetting(storedValue: s.storedValue), s) }
+        // Picker order and stored codes are unchanged from 0.1.18.
+        XCTAssertEqual(c.languages.map(\.code),
                        ["en", "ja", "zh-hant", "zh-hans", "ko", "fr", "de", "th", "pt-br", "id", "es", "ru", "vi"])
-        XCTAssertEqual(LanguageSetting(storedValue: "pt-br"), .fixed(.ptBR))
+        XCTAssertEqual(c.settings.count, 14)
     }
 
     func testEveryLanguageHasDistinctLocalizedText() {
         // Each language returns its own text (no silent English fallback) and fills placeholders.
         var titles = Set<String>()
-        for lang in AppLanguage.allCases {
+        for lang in c.languages {
             let s = Strings(lang)
             titles.insert(s.settings + s.language + s.refresh)
             let line = s.resetLine("X", remaining: "Y")
-            XCTAssertTrue(line.contains("X") && line.contains("Y") && !line.contains("%"), "\(lang)")
-            XCTAssertTrue(s.updateAvailable("9.9").contains("9.9"), "\(lang)")
-            XCTAssertTrue(s.linkMessage(existing: "cmd", settingsPath: "P").contains("cmd"), "\(lang)")
+            XCTAssertTrue(line.contains("X") && line.contains("Y") && !line.contains("{"), lang.code)
+            XCTAssertTrue(s.updateAvailable("9.9").contains("9.9"), lang.code)
+            XCTAssertTrue(s.linkMessage(existing: "cmd", settingsPath: "P").contains("cmd"), lang.code)
+            XCTAssertFalse(s.linkMessage(existing: nil, settingsPath: "P").contains("{"), lang.code)
             XCTAssertFalse(TimeText(lang).duration(444_000).isEmpty)
         }
-        XCTAssertEqual(titles.count, AppLanguage.allCases.count)
+        XCTAssertEqual(titles.count, c.languages.count)
     }
 
     func testLocalTimeFormatting() {
@@ -274,19 +346,19 @@ final class LocalizationTests: XCTestCase {
         let now = ISO8601DateFormatter().date(from: "2026-11-17T07:00:00Z")! // 16:00 JST
         let sameDay = ISO8601DateFormatter().date(from: "2026-11-17T09:40:00Z")! // 18:40 JST
         let later = ISO8601DateFormatter().date(from: "2026-11-23T00:00:00Z")! // 11/23 09:00 JST
-        XCTAssertEqual(TimeText(.ja, timeZone: tz).reset(sameDay, now: now), "18:40")
-        XCTAssertEqual(TimeText(.ja, timeZone: tz).reset(later, now: now), "11月23日 9:00")
-        XCTAssertEqual(TimeText(.ko).duration(5 * 3600 + 3 * 60), "5시간 3분")
-        XCTAssertEqual(TimeText(.zhHans).duration(TimeInterval(2 * 86_400)), "2天")
-        XCTAssertEqual(TimeText(.ja).duration(2 * 3600 + 15 * 60), "2時間15分")
-        XCTAssertEqual(TimeText(.en).duration(2 * 3600 + 15 * 60), "2h 15m")
+        XCTAssertEqual(TimeText(L("ja"), timeZone: tz).reset(sameDay, now: now), "18:40")
+        XCTAssertEqual(TimeText(L("ja"), timeZone: tz).reset(later, now: now), "11月23日 9:00")
+        XCTAssertEqual(TimeText(L("ko")).duration(5 * 3600 + 3 * 60), "5시간 3분")
+        XCTAssertEqual(TimeText(L("zh-hans")).duration(TimeInterval(2 * 86_400)), "2天")
+        XCTAssertEqual(TimeText(L("ja")).duration(2 * 3600 + 15 * 60), "2時間15分")
+        XCTAssertEqual(TimeText(L("en")).duration(2 * 3600 + 15 * 60), "2h 15m")
         // 7-day windows show days and hours.
         let fiveDays: TimeInterval = 444_000 // 5 days, 3 hours, 20 minutes
-        XCTAssertEqual(TimeText(.ja).duration(fiveDays), "5日3時間")
-        XCTAssertEqual(TimeText(.en).duration(fiveDays), "5d 3h")
-        XCTAssertEqual(TimeText(.ja).duration(TimeInterval(6 * 86_400)), "6日")
-        XCTAssertEqual(Strings(.ja).resetLine("11月23日 9:00", remaining: "5日3時間"), "リセット：11月23日 9:00（あと5日3時間）")
-        XCTAssertEqual(Strings(.ja).resetLine("18:40", remaining: "2時間15分"), "リセット：18:40（あと2時間15分）")
+        XCTAssertEqual(TimeText(L("ja")).duration(fiveDays), "5日3時間")
+        XCTAssertEqual(TimeText(L("en")).duration(fiveDays), "5d 3h")
+        XCTAssertEqual(TimeText(L("ja")).duration(TimeInterval(6 * 86_400)), "6日")
+        XCTAssertEqual(Strings(L("ja")).resetLine("11月23日 9:00", remaining: "5日3時間"), "リセット：11月23日 9:00（あと5日3時間）")
+        XCTAssertEqual(Strings(L("ja")).resetLine("18:40", remaining: "2時間15分"), "リセット：18:40（あと2時間15分）")
     }
 }
 

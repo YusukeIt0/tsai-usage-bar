@@ -66,17 +66,17 @@ enum UIPreview {
         // Optional sample budget for checking the budget rows: TSAI_PREVIEW_BUDGET=10
         if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.githubBudgetUSD = b }
         let updates = UpdateChecker(defaults: defaults)
-        for lang in AppLanguage.allCases {
-            let setting = LanguageSetting.fixed(lang)
+        for lang in LanguageCatalog.main.languages {
+            let setting = LanguageSetting.fixed(lang.code)
             settings.language = setting
             for appearance in ["light", "dark"] {
                 let scheme: ColorScheme = appearance == "light" ? .light : .dark
                 for p in Provider.allCases {
                     save(PopoverView(provider: p, model: model, settings: settings, updates: updates, openSettings: {}),
-                         scheme: scheme, to: "\(outputDir)/popover-\(p.rawValue)-\(lang.rawValue)-\(appearance).png")
+                         scheme: scheme, to: "\(outputDir)/popover-\(p.rawValue)-\(lang.code)-\(appearance).png")
                 }
             }
-            save(SettingsView(model: model, settings: settings, updates: updates, notifier: Notifier()), scheme: .light, to: "\(outputDir)/settings-\(lang.rawValue).png")
+            save(SettingsView(model: model, settings: settings, updates: updates, notifier: Notifier()), scheme: .light, to: "\(outputDir)/settings-\(lang.code).png")
         }
     }
 

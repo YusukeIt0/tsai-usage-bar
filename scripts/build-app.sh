@@ -23,6 +23,8 @@ if [ -f Resources/AppIcon.icns ]; then
   cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
   /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "$APP/Contents/Info.plist"
 fi
+mkdir -p "$APP/Contents/Resources/Languages"
+cp Resources/Languages/*.json "$APP/Contents/Resources/Languages/"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 sign() {
