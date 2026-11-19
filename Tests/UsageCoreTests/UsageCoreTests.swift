@@ -229,6 +229,7 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-MX"]), .es)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["es-419"]), .es)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["ru-KZ"]), .ru)
+        XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["vi-VN"]), .vi)
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["uk-UA", "ru-RU"]), .ru) // first supported wins
         // Chinese: explicit script first, then region.
         XCTAssertEqual(AppLanguage.resolve(auto, preferred: ["zh-Hant-HK"]), .zhHant)
@@ -247,9 +248,9 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(LanguageSetting(storedValue: "zh-hant"), .fixed(.zhHant))
         XCTAssertNil(LanguageSetting(storedValue: "nl"))
         for s in LanguageSetting.allCases { XCTAssertEqual(LanguageSetting(storedValue: s.storedValue), s) }
-        XCTAssertEqual(LanguageSetting.allCases.count, 13)
+        XCTAssertEqual(LanguageSetting.allCases.count, 14)
         XCTAssertEqual(AppLanguage.allCases.map(\.rawValue),
-                       ["en", "ja", "zh-hant", "zh-hans", "ko", "fr", "de", "th", "pt-br", "id", "es", "ru"])
+                       ["en", "ja", "zh-hant", "zh-hans", "ko", "fr", "de", "th", "pt-br", "id", "es", "ru", "vi"])
         XCTAssertEqual(LanguageSetting(storedValue: "pt-br"), .fixed(.ptBR))
     }
 
