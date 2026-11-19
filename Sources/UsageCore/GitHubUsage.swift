@@ -136,3 +136,21 @@ public struct GitHubDailyCache: Codable, Equatable, Sendable {
         fetchedAt = fetchedAt.filter { $0.key >= cutoff }
     }
 }
+
+/// Split of the "free usage + budget" bar into its free and budget parts.
+public enum BudgetBarSplit {
+    /// Fractions of the whole bar (0...1) for the free part and the budget part.
+    /// Used mode: free used, then budget used. Remaining mode: free left, then budget left.
+    /// Usage consumes the free amount first, then the budget. Nil without amounts or a budget.
+    public static func parts(_ window: UsageWindow, budgetUSD: Double?, mode: DisplayMode) -> (free: Double, budget: Double)? {
+        guard let budget = budgetUSD, budget > 0, let used = window.usedAmount,
+              let included = window.includedAmount, included > 0 else { return nil }
+        let total = included + budget
+        let freeUsed = min(max(used, 0), included)
+        let budgetUsed = min(max(used - included, 0), budget)
+        switch mode {
+        case .used: return (freeUsed / total, budgetUsed / total)
+        case .remaining: return ((included - freeUsed) / total, (budget - budgetUsed) / total)
+        }
+    }
+}
