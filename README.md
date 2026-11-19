@@ -36,7 +36,7 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 - Codex **limit resets** (reset credits): when you have any, the Codex panel shows how many are left and the earliest expiry. Optionally, a macOS notification tells you when a new one arrives (Settings → **Notify when a limit reset arrives**, off by default). Claude Code's data doesn't include this, so it's Codex only.
 - Windows your plan doesn't have (for example, plans without a 5-hour limit) are hidden automatically.
 - Values aren't guessed. After a reset time, Codex and GitHub show `—` until their next official value. Claude Code drops a window from its data once it resets and starts a new one with your next use, so its window shows full (100% remaining) until then.
-- Languages: English, 日本語, 繁體中文, 简体中文, 한국어, Français, Deutsch and ไทย. Automatic picks the first supported macOS language (otherwise English), or choose one in Settings.
+- Languages: English, 日本語, 繁體中文, 简体中文, 한국어, Français, Deutsch, ไทย, Português (Brasil), Bahasa Indonesia, Español and Русский. Automatic picks the first supported macOS language (otherwise English; any Portuguese uses Brazilian Portuguese), or choose one in Settings.
 
 <img src="docs/images/settings.png" alt="Settings window" width="360">
 
