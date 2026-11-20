@@ -106,7 +106,7 @@ final class ClaudeSource: ObservableObject, UsageSource {
         }
     }
 
-    /// Plan identifier from `claude auth status` (`subscriptionType`).
+    /// Plan identifier from `claude auth status` (see `PlanName.claudePlan`).
     var plan: String? {
         if case .signedIn(let subscription) = auth { return subscription }
         return nil

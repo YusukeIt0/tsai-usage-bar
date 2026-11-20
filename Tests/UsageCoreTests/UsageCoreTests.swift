@@ -879,6 +879,11 @@ final class PlanNameTests: XCTestCase {
     func testKnownPlansUseTheServicesOwnNames() {
         XCTAssertEqual(PlanName.display(.claude, "pro"), "Pro")
         XCTAssertEqual(PlanName.display(.claude, "max"), "Max")
+        XCTAssertEqual(PlanName.display(.claude, PlanName.claudePlan(subscriptionType: "max", planTier: "max_5x")), "Max")
+        XCTAssertEqual(PlanName.display(.claude, PlanName.claudePlan(subscriptionType: "max", planTier: "max_20x")), "Ultra")
+        XCTAssertEqual(PlanName.display(.claude, PlanName.claudePlan(subscriptionType: "max", planTier: "max_other")), "Max")
+        XCTAssertEqual(PlanName.display(.claude, PlanName.claudePlan(subscriptionType: "pro", planTier: "pro")), "Pro")
+        XCTAssertEqual(PlanName.display(.claude, PlanName.claudePlan(subscriptionType: "team", planTier: "other")), "Team")
         XCTAssertEqual(PlanName.display(.codex, "prolite"), "Pro 100")
         XCTAssertEqual(PlanName.display(.codex, "pro"), "Pro 200")
         XCTAssertEqual(PlanName.display(.codex, "promax"), "Pro 500")

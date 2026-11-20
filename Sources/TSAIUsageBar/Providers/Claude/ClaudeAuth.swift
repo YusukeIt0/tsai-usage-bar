@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UsageCore
 
 /// Claude Code sign-in state through the official `claude auth` command.
 /// The app never reads Claude credentials itself.
@@ -49,7 +50,9 @@ enum ClaudeAuth {
             let data = out.fileHandleForReading.readDataToEndOfFile()
             guard let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
                   let loggedIn = obj["loggedIn"] as? Bool else { return .unknown }
-            return loggedIn ? .signedIn(subscription: obj["subscriptionType"] as? String) : .signedOut
+            let plan = PlanName.claudePlan(subscriptionType: obj["subscriptionType"] as? String,
+                                           planTier: obj["planTier"] as? String)
+            return loggedIn ? .signedIn(subscription: plan) : .signedOut
         }.value
     }
 
