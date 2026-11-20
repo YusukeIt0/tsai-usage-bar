@@ -845,3 +845,32 @@ final class ProviderStatusTests: XCTestCase {
         XCTAssertEqual(GitHubDailyStore.load(paths: paths), GitHubDailyCache())
     }
 }
+
+final class ScreenshotFileTests: XCTestCase {
+    let home = URL(fileURLWithPath: "/Users/me", isDirectory: true)
+
+    func testFolderFollowsTheMacScreenshotSetting() {
+        let all: (URL) -> Bool = { _ in true }
+        XCTAssertEqual(ScreenshotFile.folder(location: "~/Downloads", home: home, isDirectory: all).path, "/Users/me/Downloads")
+        XCTAssertEqual(ScreenshotFile.folder(location: "/Volumes/Shots", home: home, isDirectory: all).path, "/Volumes/Shots")
+        XCTAssertEqual(ScreenshotFile.folder(location: "~", home: home, isDirectory: all).path, "/Users/me")
+    }
+
+    func testFolderFallsBackToDesktop() {
+        XCTAssertEqual(ScreenshotFile.folder(location: nil, home: home, isDirectory: { _ in true }).path, "/Users/me/Desktop")
+        XCTAssertEqual(ScreenshotFile.folder(location: "  ", home: home, isDirectory: { _ in true }).path, "/Users/me/Desktop")
+        XCTAssertEqual(ScreenshotFile.folder(location: "relative/dir", home: home, isDirectory: { _ in true }).path, "/Users/me/Desktop")
+        // A folder that was removed or a file.
+        XCTAssertEqual(ScreenshotFile.folder(location: "~/Gone", home: home, isDirectory: { _ in false }).path, "/Users/me/Desktop")
+    }
+
+    func testNameLooksLikeAMacScreenshotAndNeverOverwrites() {
+        let date = Date(timeIntervalSince1970: 1_795_213_791) // 2026-11-21 05:29:51 in UTC+7
+        let tz = TimeZone(secondsFromGMT: 7 * 3600)!
+        XCTAssertEqual(ScreenshotFile.name(service: "Claude Code", date: date, timeZone: tz) { _ in false },
+                       "TSAI UsageBar Claude Code 2026-11-21 5.29.51.png")
+        let taken: Set = ["TSAI UsageBar Codex 2026-11-21 5.29.51.png", "TSAI UsageBar Codex 2026-11-21 5.29.51 (2).png"]
+        XCTAssertEqual(ScreenshotFile.name(service: "Codex", date: date, timeZone: tz) { taken.contains($0) },
+                       "TSAI UsageBar Codex 2026-11-21 5.29.51 (3).png")
+    }
+}

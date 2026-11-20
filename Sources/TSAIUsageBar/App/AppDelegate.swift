@@ -108,10 +108,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if same { return }
         }
         popoverProvider = id.provider
-        let view = PopoverView(provider: id.provider, model: model, settings: settings, updates: updates) { [weak self] in
-            self?.panel.close()
-            self?.showSettings()
-        }
+        let view = PopoverView(provider: id.provider, model: model, settings: settings, updates: updates,
+                               openSettings: { [weak self] in
+                                   self?.panel.close()
+                                   self?.showSettings()
+                               },
+                               capturePanel: { [weak self] in self?.panel.snapshotPNG() })
         panel.show(view, below: sender) { [weak self] in
             self?.popoverProvider = nil
             self?.model.popoverDidClose()
