@@ -880,6 +880,8 @@ final class PlanNameTests: XCTestCase {
         XCTAssertEqual(PlanName.display(.claude, "pro"), "Pro")
         XCTAssertEqual(PlanName.display(.claude, "max"), "Max")
         XCTAssertEqual(PlanName.display(.codex, "prolite"), "Pro 100")
+        XCTAssertEqual(PlanName.display(.codex, "pro"), "Pro 200")
+        XCTAssertEqual(PlanName.display(.codex, "promax"), "Pro 500")
         XCTAssertEqual(PlanName.display(.codex, "plus"), "Plus")
         XCTAssertEqual(PlanName.display(.github, "free"), "Free")
     }

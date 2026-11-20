@@ -6,10 +6,12 @@ import Foundation
 public enum PlanName {
     /// Claude Code: `subscriptionType` from `claude auth status --json`.
     static let claude = ["free": "Free", "pro": "Pro", "max": "Max", "team": "Team", "enterprise": "Enterprise"]
-    /// Codex: `planType` from `account/rateLimits/read`. OpenAI names its Pro tiers by price
-    /// ("Pro 100", "Pro 200", "Pro 500"); `prolite` is Pro 100. `pro` is shown as "Pro" since
-    /// which of the higher tiers it stands for isn't confirmed.
-    static let codex = ["free": "Free", "go": "Go", "plus": "Plus", "prolite": "Pro 100", "pro": "Pro",
+    /// Codex: `planType` from `account/rateLimits/read`. OpenAI names its three Pro tiers by
+    /// price ("Pro 100", "Pro 200", "Pro 500"), and the Codex CLI's PlanType has exactly three
+    /// personal Pro values: `prolite` (Pro 100, seen on a real account), `pro` (the original
+    /// $200 Pro) and `promax`.
+    static let codex = ["free": "Free", "go": "Go", "plus": "Plus",
+                        "prolite": "Pro 100", "pro": "Pro 200", "promax": "Pro 500",
                         "team": "Team", "business": "Business", "enterprise": "Enterprise", "edu": "Edu"]
     /// GitHub: `plan.name` from `GET /user`.
     static let github = ["free": "Free", "pro": "Pro"]
