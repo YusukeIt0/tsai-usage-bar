@@ -874,3 +874,29 @@ final class ScreenshotFileTests: XCTestCase {
                        "TSAI UsageBar Codex 2026-11-21 5.29.51 (3).png")
     }
 }
+
+final class PlanNameTests: XCTestCase {
+    func testKnownPlansUseTheServicesOwnNames() {
+        XCTAssertEqual(PlanName.display(.claude, "pro"), "Pro")
+        XCTAssertEqual(PlanName.display(.claude, "max"), "Max")
+        XCTAssertEqual(PlanName.display(.codex, "prolite"), "Pro 100")
+        XCTAssertEqual(PlanName.display(.codex, "plus"), "Plus")
+        XCTAssertEqual(PlanName.display(.github, "free"), "Free")
+    }
+
+    func testUnknownPlansAreShownAsReceivedAndMissingOnesHidden() {
+        XCTAssertEqual(PlanName.display(.codex, "pro500"), "pro500")
+        XCTAssertNil(PlanName.display(.codex, nil))
+        XCTAssertNil(PlanName.display(.codex, " "))
+        XCTAssertNil(PlanName.display(.codex, "unknown"))
+    }
+
+    func testCodexPlanIsReadFromTheRateLimitReply() throws {
+        let bucket: [String: Any] = ["limitId": "codex", "planType": "prolite",
+                                     "primary": ["usedPercent": 93, "windowDurationMins": 10080, "resetsAt": 1_795_768_269]]
+        let byID = try CodexRateLimitParser.parse(result: ["rateLimitsByLimitId": ["codex": bucket]], fetchedAt: Date())
+        XCTAssertEqual(byID.plan, "prolite")
+        let single = try CodexRateLimitParser.parse(result: ["rateLimits": bucket], fetchedAt: Date())
+        XCTAssertEqual(single.plan, "prolite")
+    }
+}

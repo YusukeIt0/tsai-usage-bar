@@ -97,6 +97,8 @@ public struct ProviderSnapshot: Codable, Equatable, Sendable {
     public var reportedKinds: [WindowKind]?
     /// Codex limit-reset credits ("reset tickets"), when the service reports them.
     public var resetCredits: ResetCredits?
+    /// The service's plan identifier, when its reply includes one (Codex, GitHub).
+    public var plan: String?
 
     public init(windows: [WindowKind: UsageWindow], fetchedAt: Date, reportedKinds: [WindowKind]? = nil) {
         self.windows = windows
