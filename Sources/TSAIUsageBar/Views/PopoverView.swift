@@ -21,7 +21,13 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(provider.displayName).font(.headline)
+            HStack(alignment: .firstTextBaseline) {
+                Text(provider.displayName).font(.headline)
+                Spacer()
+                if let plan = PlanName.display(provider, provider == .claude ? model.claude.plan : status.snapshot?.plan) {
+                    Text(plan).font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
 
             switch provider {
             case .claude: ClaudePanel(source: model.claude, settings: settings, now: model.now, openSettings: openSettings)

@@ -29,6 +29,7 @@ public enum CodexRateLimitParser {
         }
         var snapshot = ProviderSnapshot(windows: windows, fetchedAt: fetchedAt)
         snapshot.resetCredits = resetCredits(in: result)
+        snapshot.plan = (bucket["planType"] as? String) ?? ((result["rateLimits"] as? [String: Any])?["planType"] as? String)
         return snapshot
     }
 

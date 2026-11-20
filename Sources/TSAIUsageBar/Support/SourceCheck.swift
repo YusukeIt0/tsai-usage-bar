@@ -13,8 +13,10 @@ enum SourceCheck {
         model.claude.reload()
         model.codex.refresh(force: true)
         model.github.refresh(force: true)
+        var authRead = false
+        Task { await model.claude.refreshAuth(); authRead = true }
         let deadline = Date().addingTimeInterval(45)
-        while Date() < deadline, model.sources.contains(where: { $0.status.isFetching }) {
+        while Date() < deadline, !authRead || model.sources.contains(where: { $0.status.isFetching }) {
             RunLoop.main.run(until: Date().addingTimeInterval(0.2))
         }
         for source in model.sources {
@@ -25,7 +27,9 @@ enum SourceCheck {
             }.joined(separator: ", ")
             let state = s.isFetching ? "still reading" : s.lastError.map { "error \($0)" } ?? "ok"
             let fetched = s.snapshot.map { "values from \($0.fetchedAt)" } ?? "no values"
-            print("\(source.provider.displayName): \(state); \(windows); \(fetched)")
+            let rawPlan = source.provider == .claude ? model.claude.plan : s.snapshot?.plan
+            let plan = PlanName.display(source.provider, rawPlan).map { "plan \($0) (\(rawPlan ?? ""))" } ?? "no plan"
+            print("\(source.provider.displayName): \(state); \(plan); \(windows); \(fetched)")
         }
         return model.sources.contains(where: { $0.status.isFetching }) ? 1 : 0
     }

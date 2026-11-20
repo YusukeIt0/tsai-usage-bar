@@ -66,7 +66,8 @@ final class ClaudeSource: ObservableObject, UsageSource {
         guard showing == .claude else { return }
         reload()
         refreshLink()
-        if status.snapshot == nil { Task { await refreshAuth() } }
+        // Sign-in state and plan; read once, and again on ↻ (the plan rarely changes).
+        if status.snapshot == nil || auth == .unknown { Task { await refreshAuth() } }
     }
 
     func didWake() { reload() }
@@ -103,6 +104,12 @@ final class ClaudeSource: ObservableObject, UsageSource {
         case .notLinked: linkState = .notLinked
         case .replacedByUser: linkState = .replacedByUser
         }
+    }
+
+    /// Plan identifier from `claude auth status` (`subscriptionType`).
+    var plan: String? {
+        if case .signedIn(let subscription) = auth { return subscription }
+        return nil
     }
 
     func refreshAuth() async {
