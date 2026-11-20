@@ -30,6 +30,7 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 - Each icon fills like a battery: the solid part matches the number shown, and the rest is faint. With no value, the whole icon is faint.
 - Up to five items: Claude Code H/W, Codex H/W and GitHub Actions M. Turn each on or off in Settings; hold ⌘ and drag to reorder. Turning off all of a service's items pauses it.
 - Click an item to see that service's bars, reset times (in your Mac's time zone) and time remaining.
+- **Screenshot**: the camera button at the bottom of a panel copies a picture of that panel to the clipboard and saves it as a PNG where your Mac saves screenshots (Screenshot app → Options → Save to; Desktop by default). Only the app's own panel is drawn, so no screen recording permission is needed. The first save into Downloads or Desktop may ask for access to that folder.
 - **Daily usage**: below the windows, a chart shows the last 7 days, one bar per day; ◀ ▶ step through earlier weeks.
   - Claude Code and Codex: the share of the 7-day limit used each day. These services report only current percentages, so the app records the daily increase locally, starting when you install this version (about 120 days are kept). Days before that show as empty outlines.
   - GitHub Actions: the share of the monthly allowance that private repositories used each day, from GitHub's official per-day billing data, so earlier days are available too (UTC dates).

@@ -235,6 +235,9 @@ public enum StringKey: String, CaseIterable, Sendable {
     case refresh
     case refreshing
     case settings
+    case screenshot
+    case screenshotSaved
+    case screenshotNotSaved
     case quit
     case never
     case lastUpdated
@@ -335,6 +338,8 @@ public struct Strings: Sendable {
         return t(.resetLineWithRemaining, ["time": time, "remaining": remaining])
     }
     public func updateAvailable(_ v: String) -> String { t(.updateAvailable, ["version": v]) }
+    public func screenshotSaved(_ folder: String) -> String { t(.screenshotSaved, ["folder": folder]) }
+    public func screenshotNotSaved(_ folder: String) -> String { t(.screenshotNotSaved, ["folder": folder]) }
     public func privateFreeQuotaWithBudget(_ amount: String) -> String { t(.privateFreeQuotaWithBudget, ["amount": amount]) }
     public func budgetRowTitle(_ amount: String) -> String { t(.budgetRowTitle, ["amount": amount]) }
     public func budgetSpent(_ used: String, _ total: String) -> String { t(.budgetSpent, ["used": used, "total": total]) }
@@ -366,6 +371,7 @@ public struct Strings: Sendable {
     public var refresh: String { t(.refresh) }
     public var refreshing: String { t(.refreshing) }
     public var settings: String { t(.settings) }
+    public var screenshot: String { t(.screenshot) }
     public var quit: String { t(.quit) }
     public var never: String { t(.never) }
     public var codexNotFound: String { t(.codexNotFound) }

@@ -96,6 +96,27 @@ final class MenuPanel {
         cb?()
     }
 
+    /// PNG of the panel exactly as drawn (buttons and symbols included), with its rounded
+    /// corners. The menu material comes out opaque, since what is behind the panel isn't drawn.
+    /// Needs no screen recording permission: only this app's own view is drawn.
+    func snapshotPNG() -> Data? {
+        guard let view = panel?.contentView,
+              let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        let size = view.bounds.size
+        let out = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: rep.pixelsWide, pixelsHigh: rep.pixelsHigh,
+                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
+        guard let out else { return nil }
+        out.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
+        NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: 10, yRadius: 10).addClip()
+        rep.draw(in: NSRect(origin: .zero, size: size))
+        NSGraphicsContext.restoreGraphicsState()
+        return out.representation(using: .png, properties: [:])
+    }
+
     private func reposition(size: NSSize) {
         guard let p = panel else { return }
         let visible = screen?.visibleFrame ?? .zero
