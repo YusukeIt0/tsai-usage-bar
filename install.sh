@@ -90,7 +90,10 @@ install() {
   NEW_APP="$TMP/unpacked/$APP_NAME.app"
   [ -d "$NEW_APP" ] || fail "アーカイブにアプリがありません。" "The archive does not contain the app."
   codesign --verify --strict "$NEW_APP" >/dev/null 2>&1 || fail "署名の検証に失敗しました。中止しました。" "Signature verification failed. Aborted."
-  if codesign -dv "$NEW_APP" 2>&1 | grep -q "Authority=Developer ID Application"; then
+  SIGNATURE=$(codesign -dvv "$NEW_APP" 2>&1)
+  if printf '%s\n' "$SIGNATURE" | grep -q "^Authority=Developer ID Application: "; then
+    printf '%s\n' "$SIGNATURE" | grep -qx "TeamIdentifier=27K9A27SGR" ||
+      fail "署名した開発者が想定と異なります。中止しました。" "The app is signed by an unexpected developer. Aborted."
     SIGNED="developer-id"
   else
     SIGNED="adhoc"
