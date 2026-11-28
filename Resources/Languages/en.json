@@ -98,6 +98,16 @@
     "linkMessage": "To receive usage limits, TSAI UsageBar changes statusLine in {path} to its relay command. {keep}\nThe previous setting is backed up and restored when you disconnect or uninstall.",
     "cancel": "Cancel",
     "linkFailed": "Couldn't connect",
-    "settingsUnreadable": "Couldn't read Claude Code settings. Nothing was changed."
+    "settingsUnreadable": "Couldn't read Claude Code settings. Nothing was changed.",
+    "contributionsTitle": "Contributions",
+    "contributionsTotal": "{count} contributions",
+    "contributionsTotalOne": "1 contribution",
+    "contributionsOnDay": "{count} contributions on {date}.",
+    "contributionsOnDayOne": "1 contribution on {date}.",
+    "contributionsOnDayNone": "No contributions on {date}.",
+    "contributionsLess": "Less",
+    "contributionsMore": "More",
+    "earlier": "Earlier",
+    "later": "Later"
   }
 }

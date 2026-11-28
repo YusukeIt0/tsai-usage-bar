@@ -907,3 +907,88 @@ final class PlanNameTests: XCTestCase {
         XCTAssertEqual(single.plan, "prolite")
     }
 }
+
+final class ContributionTests: XCTestCase {
+    /// 53 weeks from Sunday 2025-11-23 to Saturday 2026-11-28, one contribution on each day of month 1.
+    static func reply(total: Int = 1297) -> Data {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC")!
+        let f = DateFormatter()
+        f.calendar = cal
+        f.timeZone = cal.timeZone
+        f.dateFormat = "yyyy-MM-dd"
+        let start = f.date(from: "2025-11-23")!
+        let weeks: [[String: Any]] = (0..<53).map { w in
+            ["contributionDays": (0..<7).map { d -> [String: Any] in
+                let date = cal.date(byAdding: .day, value: w * 7 + d, to: start)!
+                let first = cal.component(.day, from: date) == 1
+                return ["date": f.string(from: date), "contributionCount": first ? 69 : 0,
+                        "contributionLevel": first ? "FOURTH_QUARTILE" : "NONE", "weekday": d]
+            }]
+        }
+        let root: [String: Any] = ["data": ["viewer": ["contributionsCollection": ["contributionCalendar": [
+            "totalContributions": total, "weeks": weeks]]]]]
+        return try! JSONSerialization.data(withJSONObject: root)
+    }
+
+    func testParsesGitHubCalendar() throws {
+        let c = try ContributionCalendar.parse(Self.reply(), now: Date())
+        XCTAssertEqual(c.totalContributions, 1297)
+        XCTAssertEqual(c.weeks.count, 53)
+        XCTAssertEqual(c.weeks[0][0], ContributionDay(date: "2025-11-23", count: 0, level: 0, weekday: 0))
+        XCTAssertEqual(c.weeks.joined().first { $0.date == "2026-11-01" }?.level, 4)
+        XCTAssertThrowsError(try ContributionCalendar.parse(Data(#"{"errors":[{"message":"x"}]}"#.utf8), now: Date()))
+        XCTAssertTrue(ContributionCalendar.query.hasPrefix("query"), "only reads")
+    }
+
+    func testPagesOf13WeeksWithinTheYear() throws {
+        let c = try ContributionCalendar.parse(Self.reply(), now: Date())
+        XCTAssertEqual(c.pageCount, 5)
+        XCTAssertEqual(c.page(0).count, 13)
+        XCTAssertEqual(c.page(0).last?.last?.date, "2026-11-28")
+        XCTAssertEqual(c.page(0).first?.first?.date, "2026-08-30")
+        XCTAssertEqual(c.page(1).last?.last?.date, "2026-08-29")
+        // The oldest page starts the year instead of showing one lone week.
+        XCTAssertEqual(c.page(4).count, 13)
+        XCTAssertEqual(c.page(4).first?.first?.date, "2025-11-23")
+        XCTAssertEqual(c.page(99), c.page(4))
+        XCTAssertEqual(ContributionCalendar.total(c.page(0)), 69 * 3) // Sep 1, Oct 1, Nov 1
+    }
+
+    func testMonthLabelsStartWhereMonthsStart() throws {
+        let c = try ContributionCalendar.parse(Self.reply(), now: Date())
+        let labels = ContributionCalendar.monthLabels(c.page(0))
+        // Weeks start 8/30 (August, not labelled: the month began earlier), 9/6 …
+        XCTAssertEqual(labels.map(\.month), [9, 10, 11])
+        XCTAssertEqual(labels.first?.column, 1)
+    }
+
+    func testStoreRoundTrip() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let paths = AppPaths(supportDirectory: dir)
+        let c = try ContributionCalendar.parse(Self.reply(), now: Date(timeIntervalSince1970: 1_795_000_000))
+        try ContributionStore.save(c, paths: paths)
+        XCTAssertEqual(ContributionStore.load(paths: paths), c)
+        ContributionStore.remove(paths: paths)
+        XCTAssertNil(ContributionStore.load(paths: paths))
+    }
+
+    func testHoverTextLikeGitHub() throws {
+        let catalog = TestLanguages.catalog
+        let en = Strings(catalog.english)
+        XCTAssertEqual(en.contributionsOnDay(69, date: "November 19"), "69 contributions on November 19.")
+        XCTAssertEqual(en.contributionsOnDay(1, date: "November 19"), "1 contribution on November 19.")
+        XCTAssertEqual(en.contributionsOnDay(0, date: "November 19"), "No contributions on November 19.")
+        XCTAssertEqual(en.contributionsTotal(1297), "1,297 contributions")
+        XCTAssertEqual(en.contributionsTotal(1), "1 contribution")
+        for lang in catalog.languages {
+            let s = Strings(lang)
+            for n in [0, 1, 1234] {
+                let t = s.contributionsOnDay(n, date: "D")
+                XCTAssertTrue(t.contains("D") && !t.contains("{"), "\(lang.code) \(n)")
+            }
+            XCTAssertFalse(s.contributionsTotal(5).contains("{"), lang.code)
+        }
+    }
+}

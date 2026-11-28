@@ -99,6 +99,16 @@
     "linkMessage": "为了接收用量上限，TSAI UsageBar 会将 {path} 中的 statusLine 改为其转发命令。{keep}\n原来的设置会备份，并在取消关联或卸载时恢复。",
     "cancel": "取消",
     "linkFailed": "无法关联",
-    "settingsUnreadable": "无法读取 Claude Code 设置，未做任何更改。"
+    "settingsUnreadable": "无法读取 Claude Code 设置，未做任何更改。",
+    "contributionsTitle": "贡献",
+    "contributionsTotal": "{count} 次贡献",
+    "contributionsTotalOne": "1 次贡献",
+    "contributionsOnDay": "{date}：{count} 次贡献",
+    "contributionsOnDayOne": "{date}：1 次贡献",
+    "contributionsOnDayNone": "{date}：无贡献",
+    "contributionsLess": "少",
+    "contributionsMore": "多",
+    "earlier": "更早",
+    "later": "更晚"
   }
 }

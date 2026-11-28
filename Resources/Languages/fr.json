@@ -98,6 +98,16 @@
     "linkMessage": "Pour recevoir les limites d’utilisation, TSAI UsageBar remplace le statusLine de {path} par sa commande relais. {keep}\nLe réglage précédent est sauvegardé, puis restauré si vous déliez ou désinstallez l’app.",
     "cancel": "Annuler",
     "linkFailed": "Impossible de relier",
-    "settingsUnreadable": "Impossible de lire les réglages de Claude Code. Rien n’a été modifié."
+    "settingsUnreadable": "Impossible de lire les réglages de Claude Code. Rien n’a été modifié.",
+    "contributionsTitle": "Contributions",
+    "contributionsTotal": "{count} contributions",
+    "contributionsTotalOne": "1 contribution",
+    "contributionsOnDay": "{count} contributions le {date}.",
+    "contributionsOnDayOne": "1 contribution le {date}.",
+    "contributionsOnDayNone": "Aucune contribution le {date}.",
+    "contributionsLess": "Moins",
+    "contributionsMore": "Plus",
+    "earlier": "Période précédente",
+    "later": "Période suivante"
   }
 }

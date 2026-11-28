@@ -98,6 +98,16 @@
     "linkMessage": "利用枠を受け取るため、{path} の statusLine をTSAI UsageBarの中継コマンドに変更します。{keep}\n変更前の設定はバックアップし、連携解除やアンインストールで元に戻します。",
     "cancel": "キャンセル",
     "linkFailed": "連携できませんでした",
-    "settingsUnreadable": "Claude Codeの設定ファイルを読み取れません。変更していません。"
+    "settingsUnreadable": "Claude Codeの設定ファイルを読み取れません。変更していません。",
+    "contributionsTitle": "コントリビューション",
+    "contributionsTotal": "{count}件のコントリビューション",
+    "contributionsTotalOne": "1件のコントリビューション",
+    "contributionsOnDay": "{date}: {count}件のコントリビューション",
+    "contributionsOnDayOne": "{date}: 1件のコントリビューション",
+    "contributionsOnDayNone": "{date}: コントリビューションなし",
+    "contributionsLess": "少",
+    "contributionsMore": "多",
+    "earlier": "前の期間",
+    "later": "次の期間"
   }
 }

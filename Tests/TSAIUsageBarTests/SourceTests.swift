@@ -146,12 +146,19 @@ final class CodexSourceTests: SourceTestCase {
 }
 
 final class GitHubSourceTests: SourceTestCase {
+    nonisolated static let calendar = ContributionCalendar(
+        weeks: [[ContributionDay(date: "2026-11-22", count: 3, level: 2, weekday: 0)]], totalContributions: 3,
+        fetchedAt: Date(timeIntervalSince1970: 1_795_000_000))
+
     func make(token: Bool = true, usage: [Result<ProviderSnapshot, ProviderError>] = [],
-              reads: Shared<Int> = Shared(0), forgotten: Shared<Bool> = Shared(false)) -> GitHubSource {
+              reads: Shared<Int> = Shared(0), forgotten: Shared<Bool> = Shared(false),
+              contributions: [Result<ContributionCalendar, ProviderError>] = [.success(calendar)]) -> GitHubSource {
         let queue = Shared(usage)
+        let calendars = Shared(contributions)
         return GitHubSource(paths: paths,
                             readUsage: { reads.value += 1; return queue.value.removeFirst() },
                             readDays: { keys in .success(.init(amounts: Dictionary(uniqueKeysWithValues: keys.map { ($0, 0.3) }), included: 18)) },
+                            readContributions: { calendars.value.count > 1 ? calendars.value.removeFirst() : calendars.value[0] },
                             hasToken: { token },
                             forgetToken: { forgotten.value = true },
                             login: token ? "someone" : nil)
@@ -201,6 +208,7 @@ final class GitHubSourceTests: SourceTestCase {
         let github = make(usage: [.success(snapshot(used: 10, amounts: (1, 12, 0)))], forgotten: forgotten)
         await whenUpdated(github) { github.refreshNow() }
         try GitHubDailyStore.save(GitHubDailyCache(), paths: paths)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: ContributionStore.url(paths: paths).path))
         github.disconnect()
         XCTAssertTrue(forgotten.value)
         XCTAssertNil(github.login)
@@ -208,6 +216,21 @@ final class GitHubSourceTests: SourceTestCase {
         XCTAssertEqual(github.status.lastError, .notSignedIn)
         XCTAssertFalse(FileManager.default.fileExists(atPath: paths.snapshotURL(.github).path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: GitHubDailyStore.url(paths: paths).path))
+        XCTAssertNil(github.contributions)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: ContributionStore.url(paths: paths).path))
+    }
+
+    func testContributionsAreReadWithUsageStoredAndKeptOnFailure() async {
+        let github = make(usage: [.success(snapshot(used: 10)), .success(snapshot(used: 20))],
+                          contributions: [.success(Self.calendar), .failure(.failed(nil))])
+        await whenUpdated(github) { github.refreshNow() }
+        XCTAssertEqual(github.contributions, Self.calendar)
+        XCTAssertEqual(ContributionStore.load(paths: paths), Self.calendar)
+        await whenUpdated(github) { github.refreshNow() }
+        XCTAssertEqual(github.contributions, Self.calendar, "a failed read keeps the last calendar")
+        XCTAssertTrue(github.contributionsFailed)
+        // Shown at once on the next launch.
+        XCTAssertEqual(make().contributions, Self.calendar)
     }
 }
 
@@ -256,6 +279,7 @@ final class UsageModelTests: SourceTestCase {
             return .success(snap)
         }
         let github = GitHubSource(paths: paths, readUsage: { .failure(.failed(nil)) }, readDays: { _ in .failure(.failed(nil)) },
+                                  readContributions: { .failure(.notSignedIn) },
                                   hasToken: { false }, forgetToken: {}, login: nil)
         let model = UsageModel(paths: paths, codex: codex, github: github)
         var arrived: [Provider] = []

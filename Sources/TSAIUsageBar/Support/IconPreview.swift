@@ -65,6 +65,8 @@ enum UIPreview {
         let model = UsageModel()
         // Optional sample budget for checking the budget rows: TSAI_PREVIEW_BUDGET=10
         if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.github.budgetUSD = b }
+        // Optional hovered contribution square: TSAI_PREVIEW_HOVER=2026-11-19
+        ContributionGraph.previewHoverDate = ProcessInfo.processInfo.environment["TSAI_PREVIEW_HOVER"]
         let updates = UpdateChecker(defaults: defaults)
         for lang in LanguageCatalog.main.languages {
             let setting = LanguageSetting.fixed(lang.code)
@@ -78,6 +80,29 @@ enum UIPreview {
             }
             save(SettingsView(model: model, settings: settings, updates: updates, notifier: Notifier()), scheme: .light, to: "\(outputDir)/settings-\(lang.code).png")
         }
+    }
+
+    /// `TSAIUsageBar --capture-panel <claude|codex|github> <file.png>`: one panel in English,
+    /// dark, drawn the way the panel's camera button draws it (buttons included), for the
+    /// README screenshots. Uses this Mac's stored values and the TSAI_PREVIEW_* variables above.
+    static func capturePanel(_ name: String, to path: String) -> Bool {
+        guard let provider = Provider(rawValue: name) else { return false }
+        _ = NSApplication.shared
+        ContributionGraph.previewHoverDate = ProcessInfo.processInfo.environment["TSAI_PREVIEW_HOVER"]
+        let defaults = UserDefaults(suiteName: "tsai-usagebar-preview")!
+        defaults.removePersistentDomain(forName: "tsai-usagebar-preview")
+        let settings = AppSettings(defaults: defaults)
+        settings.language = .fixed("en")
+        if ProcessInfo.processInfo.environment["TSAI_PREVIEW_MODE"] == "used" { settings.displayMode = .used }
+        let model = UsageModel()
+        if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.github.budgetUSD = b }
+        let panel = MenuPanel()
+        panel.showDetached(PopoverView(provider: provider, model: model, settings: settings,
+                                       updates: UpdateChecker(defaults: defaults), openSettings: {}))
+        RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+        defer { panel.close() }
+        guard let png = panel.snapshotPNG() else { return false }
+        return (try? png.write(to: URL(fileURLWithPath: path))) != nil
     }
 
     static func save<V: View>(_ view: V, scheme: ColorScheme, to path: String) {

@@ -11,6 +11,9 @@ MainActor.assumeIsolated {
         UIPreview.run(outputDir: args[i + 1])
         exit(0)
     }
+    if let i = args.firstIndex(of: "--capture-panel"), i + 2 < args.count {
+        exit(UIPreview.capturePanel(args[i + 1], to: args[i + 2]) ? 0 : 1)
+    }
     // CI: checks that the language files shipped in this build are complete.
     if args.contains("--check-languages") {
         guard let dir = LanguageCatalog.bundledDirectory() else {

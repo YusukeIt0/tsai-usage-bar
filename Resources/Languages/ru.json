@@ -98,6 +98,16 @@
     "linkMessage": "Чтобы получать лимиты использования, TSAI UsageBar заменяет statusLine в {path} на свою команду-ретранслятор. {keep}\nПрежняя настройка сохраняется и восстанавливается при отключении или удалении.",
     "cancel": "Отменить",
     "linkFailed": "Не удалось подключиться",
-    "settingsUnreadable": "Не удалось прочитать настройки Claude Code. Ничего не изменено."
+    "settingsUnreadable": "Не удалось прочитать настройки Claude Code. Ничего не изменено.",
+    "contributionsTitle": "Вклад",
+    "contributionsTotal": "Вклад: {count}",
+    "contributionsTotalOne": "Вклад: 1",
+    "contributionsOnDay": "{date}: вклад {count}",
+    "contributionsOnDayOne": "{date}: вклад 1",
+    "contributionsOnDayNone": "{date}: нет вклада",
+    "contributionsLess": "Меньше",
+    "contributionsMore": "Больше",
+    "earlier": "Раньше",
+    "later": "Позже"
   }
 }

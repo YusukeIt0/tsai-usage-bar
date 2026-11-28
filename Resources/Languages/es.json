@@ -98,6 +98,16 @@
     "linkMessage": "Para recibir los límites de uso, TSAI UsageBar cambia el statusLine de {path} a su comando de retransmisión. {keep}\nEl ajuste anterior se guarda y se restaura al desconectar o desinstalar.",
     "cancel": "Cancelar",
     "linkFailed": "No se pudo conectar",
-    "settingsUnreadable": "No se pudieron leer los ajustes de Claude Code. No se cambió nada."
+    "settingsUnreadable": "No se pudieron leer los ajustes de Claude Code. No se cambió nada.",
+    "contributionsTitle": "Contribuciones",
+    "contributionsTotal": "{count} contribuciones",
+    "contributionsTotalOne": "1 contribución",
+    "contributionsOnDay": "{count} contribuciones el {date}.",
+    "contributionsOnDayOne": "1 contribución el {date}.",
+    "contributionsOnDayNone": "Sin contribuciones el {date}.",
+    "contributionsLess": "Menos",
+    "contributionsMore": "Más",
+    "earlier": "Anterior",
+    "later": "Siguiente"
   }
 }

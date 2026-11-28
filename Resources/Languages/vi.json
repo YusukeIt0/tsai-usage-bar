@@ -99,6 +99,16 @@
     "linkMessage": "Để nhận giới hạn sử dụng, TSAI UsageBar đổi statusLine trong {path} sang lệnh chuyển tiếp của ứng dụng. {keep}\nCài đặt trước đó được sao lưu và khôi phục khi bạn ngắt kết nối hoặc gỡ cài đặt.",
     "cancel": "Hủy",
     "linkFailed": "Không thể kết nối",
-    "settingsUnreadable": "Không thể đọc cài đặt Claude Code. Không có gì bị thay đổi."
+    "settingsUnreadable": "Không thể đọc cài đặt Claude Code. Không có gì bị thay đổi.",
+    "contributionsTitle": "Đóng góp",
+    "contributionsTotal": "{count} đóng góp",
+    "contributionsTotalOne": "1 đóng góp",
+    "contributionsOnDay": "{count} đóng góp vào {date}.",
+    "contributionsOnDayOne": "1 đóng góp vào {date}.",
+    "contributionsOnDayNone": "Không có đóng góp vào {date}.",
+    "contributionsLess": "Ít",
+    "contributionsMore": "Nhiều",
+    "earlier": "Trước",
+    "later": "Sau"
   }
 }
