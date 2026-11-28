@@ -17,7 +17,10 @@ if [ -n "${NOTARY_PROFILE:-}" ] && [ -z "${SIGN_IDENTITY:-}" ]; then
 fi
 
 swift build -c release --arch arm64 --arch x86_64
-BIN=".build/apple/Products/Release"
+# Ask SwiftPM where it put the products: the folder differs between Swift versions
+# (.build/apple with older toolchains, .build/out with newer ones), and an old folder can keep
+# a stale build that would otherwise be packaged without any error.
+BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
 
 rm -rf "$DIST"
 mkdir -p "$DIST"
