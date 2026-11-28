@@ -6,7 +6,8 @@ import UsageCore
 /// Tokens are kept in a file readable only by this user in the app's support folder, the
 /// same approach the Codex CLI uses for its login. The Keychain is not used because these
 /// builds are ad-hoc signed, so macOS would ask for access again after every update.
-/// The token can only read the account's plan and billing usage.
+/// The app's only permission is reading the account's plan and billing usage; the token also
+/// reads public data such as the contribution calendar, which needs no permission.
 enum GitHubAuth {
     static let clientID = "Iv23lindgcrOz1pwSfLm"
 

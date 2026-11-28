@@ -65,6 +65,8 @@ enum UIPreview {
         let model = UsageModel()
         // Optional sample budget for checking the budget rows: TSAI_PREVIEW_BUDGET=10
         if let b = ProcessInfo.processInfo.environment["TSAI_PREVIEW_BUDGET"].flatMap(Double.init) { model.github.budgetUSD = b }
+        // Optional hovered contribution square: TSAI_PREVIEW_HOVER=2026-11-19
+        ContributionGraph.previewHoverDate = ProcessInfo.processInfo.environment["TSAI_PREVIEW_HOVER"]
         let updates = UpdateChecker(defaults: defaults)
         for lang in LanguageCatalog.main.languages {
             let setting = LanguageSetting.fixed(lang.code)

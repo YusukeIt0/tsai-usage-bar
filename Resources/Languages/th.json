@@ -98,6 +98,16 @@
     "linkMessage": "เพื่อรับข้อมูลขีดจำกัดการใช้งาน TSAI UsageBar จะเปลี่ยน statusLine ใน {path} เป็นคำสั่งส่งต่อของแอป {keep}\nการตั้งค่าเดิมจะถูกสำรองไว้และกู้คืนเมื่อยกเลิกการเชื่อมต่อหรือถอนการติดตั้ง",
     "cancel": "ยกเลิก",
     "linkFailed": "เชื่อมต่อไม่สำเร็จ",
-    "settingsUnreadable": "อ่านการตั้งค่า Claude Code ไม่ได้ ไม่มีการเปลี่ยนแปลงใด ๆ"
+    "settingsUnreadable": "อ่านการตั้งค่า Claude Code ไม่ได้ ไม่มีการเปลี่ยนแปลงใด ๆ",
+    "contributionsTitle": "การมีส่วนร่วม",
+    "contributionsTotal": "{count} การมีส่วนร่วม",
+    "contributionsTotalOne": "1 การมีส่วนร่วม",
+    "contributionsOnDay": "{count} การมีส่วนร่วมเมื่อ {date}",
+    "contributionsOnDayOne": "1 การมีส่วนร่วมเมื่อ {date}",
+    "contributionsOnDayNone": "ไม่มีการมีส่วนร่วมเมื่อ {date}",
+    "contributionsLess": "น้อย",
+    "contributionsMore": "มาก",
+    "earlier": "ก่อนหน้า",
+    "later": "ถัดไป"
   }
 }

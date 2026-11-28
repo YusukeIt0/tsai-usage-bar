@@ -2,11 +2,13 @@ import AppKit
 import UsageCore
 
 /// GitHub Actions: this month's included usage for private repositories, read about hourly
-/// from GitHub's billing summary, plus per-day usage for the chart.
+/// from GitHub's billing summary, plus per-day usage for the chart and the account's
+/// contribution calendar, read together with the usage.
 @MainActor
 final class GitHubSource: ObservableObject, UsageSource {
     typealias UsageReader = @Sendable () async -> Result<ProviderSnapshot, ProviderError>
     typealias DailyReader = @Sendable ([String]) async -> Result<GitHubDailyClient.Result, ProviderError>
+    typealias ContributionsReader = @Sendable () async -> Result<ContributionCalendar, ProviderError>
 
     let provider = Provider.github
     /// GitHub's "Budgets and alerts" page for the signed-in personal account.
@@ -20,6 +22,9 @@ final class GitHubSource: ObservableObject, UsageSource {
     @Published private(set) var daily: GitHubDailyCache
     @Published private(set) var dailyLoading = false
     @Published private(set) var dailyFailed = false
+    /// The last contribution calendar read; kept when a later read fails.
+    @Published private(set) var contributions: ContributionCalendar?
+    @Published private(set) var contributionsFailed = false
     /// Monthly Actions budget from Settings; changes the percent without reading again.
     @Published var budgetUSD: Double? {
         didSet {
@@ -33,6 +38,7 @@ final class GitHubSource: ObservableObject, UsageSource {
     private let paths: AppPaths
     private let readUsage: UsageReader
     private let readDays: DailyReader
+    private let readContributions: ContributionsReader
     private let hasToken: () -> Bool
     private let forgetToken: () -> Void
     private let policy = GitHubFetchPolicy()
@@ -44,16 +50,19 @@ final class GitHubSource: ObservableObject, UsageSource {
     init(paths: AppPaths,
          readUsage: @escaping UsageReader = { await GitHubClient.readUsage() },
          readDays: @escaping DailyReader = { await GitHubDailyClient.read(days: $0) },
+         readContributions: @escaping ContributionsReader = { await GitHubContributionsClient.read() },
          hasToken: @escaping () -> Bool = { GitHubAuth.load() != nil },
          forgetToken: @escaping () -> Void = { GitHubAuth.remove() },
          login: String? = GitHubAuth.load()?.login) {
         self.paths = paths
         self.readUsage = readUsage
         self.readDays = readDays
+        self.readContributions = readContributions
         self.hasToken = hasToken
         self.forgetToken = forgetToken
         self.login = login
         daily = GitHubDailyStore.load(paths: paths)
+        contributions = login == nil ? nil : ContributionStore.load(paths: paths)
         status.snapshot = SnapshotStore.load(paths.snapshotURL(.github))
     }
 
@@ -106,8 +115,19 @@ final class GitHubSource: ObservableObject, UsageSource {
         status.begin(at: Date())
         timer?.invalidate()
         let readUsage = readUsage
+        let readContributions = readContributions
         Task {
+            async let calendar = readContributions()
             let result = await readUsage()
+            switch await calendar {
+            case .success(let c):
+                self.contributions = c
+                self.contributionsFailed = false
+                try? self.paths.ensureDirectory()
+                try? ContributionStore.save(c, paths: self.paths)
+            case .failure:
+                self.contributionsFailed = true
+            }
             switch result {
             case .success(let snap):
                 self.status.succeed(snap)
@@ -199,6 +219,8 @@ final class GitHubSource: ObservableObject, UsageSource {
         status = ProviderStatus(lastError: .notSignedIn)
         daily = GitHubDailyCache()
         GitHubDailyStore.remove(paths: paths)
+        contributions = nil
+        ContributionStore.remove(paths: paths)
         try? FileManager.default.removeItem(at: paths.snapshotURL(.github))
     }
 }

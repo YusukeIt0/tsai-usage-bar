@@ -302,6 +302,16 @@ public enum StringKey: String, CaseIterable, Sendable {
     case cancel
     case linkFailed
     case settingsUnreadable
+    case contributionsTitle
+    case contributionsTotal
+    case contributionsTotalOne
+    case contributionsOnDay
+    case contributionsOnDayOne
+    case contributionsOnDayNone
+    case contributionsLess
+    case contributionsMore
+    case earlier
+    case later
 }
 
 /// All user-facing text in one language. Language changes apply without a restart.
@@ -344,6 +354,27 @@ public struct Strings: Sendable {
     public func budgetRowTitle(_ amount: String) -> String { t(.budgetRowTitle, ["amount": amount]) }
     public func budgetSpent(_ used: String, _ total: String) -> String { t(.budgetSpent, ["used": used, "total": total]) }
     public func githubEnterCode(_ code: String) -> String { t(.githubEnterCode, ["code": code]) }
+
+    /// "1,297 contributions" for the shown weeks.
+    public func contributionsTotal(_ count: Int) -> String {
+        count == 1 ? t(.contributionsTotalOne) : t(.contributionsTotal, ["count": number(count)])
+    }
+
+    /// The hover text for one day, like GitHub's: "69 contributions on November 19."
+    public func contributionsOnDay(_ count: Int, date: String) -> String {
+        switch count {
+        case 0: t(.contributionsOnDayNone, ["date": date])
+        case 1: t(.contributionsOnDayOne, ["date": date])
+        default: t(.contributionsOnDay, ["count": number(count), "date": date])
+        }
+    }
+
+    func number(_ n: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = lang.locale
+        return f.string(from: NSNumber(value: n)) ?? String(n)
+    }
 
     public func itemName(_ id: ItemID) -> String {
         "\(id.provider.displayName) \(id.window.letter) (\(windowTitle(id.window)))"
@@ -426,6 +457,11 @@ public struct Strings: Sendable {
     public var cancel: String { t(.cancel) }
     public var linkFailed: String { t(.linkFailed) }
     public var settingsUnreadable: String { t(.settingsUnreadable) }
+    public var contributionsTitle: String { t(.contributionsTitle) }
+    public var contributionsLess: String { t(.contributionsLess) }
+    public var contributionsMore: String { t(.contributionsMore) }
+    public var earlier: String { t(.earlier) }
+    public var later: String { t(.later) }
 }
 
 /// Formats reset times in the Mac's local time zone, in the app's language.

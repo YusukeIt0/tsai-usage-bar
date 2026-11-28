@@ -98,6 +98,16 @@
     "linkMessage": "Um Nutzungslimits zu empfangen, ändert TSAI UsageBar die statusLine in {path} auf seinen Weiterleitungsbefehl. {keep}\nDie vorherige Einstellung wird gesichert und beim Trennen oder Deinstallieren wiederhergestellt.",
     "cancel": "Abbrechen",
     "linkFailed": "Verbindung fehlgeschlagen",
-    "settingsUnreadable": "Claude-Code-Einstellungen konnten nicht gelesen werden. Es wurde nichts geändert."
+    "settingsUnreadable": "Claude-Code-Einstellungen konnten nicht gelesen werden. Es wurde nichts geändert.",
+    "contributionsTitle": "Beiträge",
+    "contributionsTotal": "{count} Beiträge",
+    "contributionsTotalOne": "1 Beitrag",
+    "contributionsOnDay": "{count} Beiträge am {date}.",
+    "contributionsOnDayOne": "1 Beitrag am {date}.",
+    "contributionsOnDayNone": "Keine Beiträge am {date}.",
+    "contributionsLess": "Weniger",
+    "contributionsMore": "Mehr",
+    "earlier": "Früher",
+    "later": "Später"
   }
 }

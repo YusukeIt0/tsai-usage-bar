@@ -99,6 +99,16 @@
     "linkMessage": "Untuk menerima batas penggunaan, TSAI UsageBar mengubah statusLine di {path} ke perintah relai miliknya. {keep}\nPengaturan sebelumnya dicadangkan dan dipulihkan saat Anda memutuskan atau mencopot pemasangan.",
     "cancel": "Batalkan",
     "linkFailed": "Tidak dapat menghubungkan",
-    "settingsUnreadable": "Tidak dapat membaca pengaturan Claude Code. Tidak ada yang diubah."
+    "settingsUnreadable": "Tidak dapat membaca pengaturan Claude Code. Tidak ada yang diubah.",
+    "contributionsTitle": "Kontribusi",
+    "contributionsTotal": "{count} kontribusi",
+    "contributionsTotalOne": "1 kontribusi",
+    "contributionsOnDay": "{count} kontribusi pada {date}.",
+    "contributionsOnDayOne": "1 kontribusi pada {date}.",
+    "contributionsOnDayNone": "Tidak ada kontribusi pada {date}.",
+    "contributionsLess": "Sedikit",
+    "contributionsMore": "Banyak",
+    "earlier": "Sebelumnya",
+    "later": "Berikutnya"
   }
 }

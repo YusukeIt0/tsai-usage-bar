@@ -2,7 +2,7 @@ import SwiftUI
 import UsageCore
 
 /// GitHub Actions' part of its panel: the month window (split by colour with a budget),
-/// the budget on its own, notices, and the per-day chart.
+/// the budget on its own, notices, the per-day chart and the contribution graph.
 struct GitHubPanel: View {
     @ObservedObject var source: GitHubSource
     @ObservedObject var settings: AppSettings
@@ -45,6 +45,12 @@ struct GitHubPanel: View {
                 GitHubDailyCache.utcKey(Date().addingTimeInterval(-728 * 86_400))
             } onShow: { days in
                 source.loadDays(days.map { DailyUsageLog.dayKey($0) })
+            }
+            Divider()
+            if let calendar = source.contributions {
+                ContributionGraph(calendar: calendar, strings: s, lang: settings.appLanguage)
+            } else {
+                Text(source.contributionsFailed ? s.fetchFailed : s.loading).font(.caption2).foregroundStyle(.secondary)
             }
         }
     }

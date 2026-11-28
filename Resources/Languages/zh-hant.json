@@ -101,6 +101,16 @@
     "linkMessage": "為了接收用量上限，TSAI UsageBar 會將 {path} 中的 statusLine 改為其轉送指令。{keep}\n原本的設定會備份，並在取消連結或解除安裝時還原。",
     "cancel": "取消",
     "linkFailed": "無法連結",
-    "settingsUnreadable": "無法讀取 Claude Code 設定，未做任何變更。"
+    "settingsUnreadable": "無法讀取 Claude Code 設定，未做任何變更。",
+    "contributionsTitle": "貢獻",
+    "contributionsTotal": "{count} 次貢獻",
+    "contributionsTotalOne": "1 次貢獻",
+    "contributionsOnDay": "{date}：{count} 次貢獻",
+    "contributionsOnDayOne": "{date}：1 次貢獻",
+    "contributionsOnDayNone": "{date}：無貢獻",
+    "contributionsLess": "少",
+    "contributionsMore": "多",
+    "earlier": "較早",
+    "later": "較晚"
   }
 }
