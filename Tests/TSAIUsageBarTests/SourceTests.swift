@@ -146,7 +146,7 @@ final class CodexSourceTests: SourceTestCase {
 }
 
 final class GitHubSourceTests: SourceTestCase {
-    static let calendar = ContributionCalendar(
+    nonisolated static let calendar = ContributionCalendar(
         weeks: [[ContributionDay(date: "2026-11-22", count: 3, level: 2, weekday: 0)]], totalContributions: 3,
         fetchedAt: Date(timeIntervalSince1970: 1_795_000_000))
 
