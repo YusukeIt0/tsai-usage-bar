@@ -25,7 +25,29 @@ final class MenuPanel {
         screen = buttonWindow.screen ?? NSScreen.main
         anchorTop = buttonRect.minY - 4
         anchorX = buttonRect.minX
+        present(view)
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
+            MainActor.assumeIsolated { self?.close() }
+        }) { eventMonitors.append(m) }
+        observers.append(NotificationCenter.default.addObserver(forName: NSWorkspace.didActivateApplicationNotification,
+                                                               object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.close() }
+        })
+    }
 
+    /// Developer aid (`--capture-panel`): the panel in dark appearance near the top left of the
+    /// main screen, without a menu bar item, so `snapshotPNG` can draw it.
+    func showDetached<V: View>(_ view: V) {
+        close()
+        screen = NSScreen.main
+        let visible = screen?.visibleFrame ?? .zero
+        anchorTop = visible.maxY - 4
+        anchorX = visible.minX + 8
+        present(view)
+        panel?.appearance = NSAppearance(named: .darkAqua)
+    }
+
+    private func present<V: View>(_ view: V) {
         let host = NSHostingController(rootView: view)
         host.sizingOptions = [.preferredContentSize]
 
@@ -72,13 +94,6 @@ final class MenuPanel {
                 if abs(p.frame.maxY - self.anchorTop) > 0.5 { self.reposition(size: p.frame.size) }
             }
         }
-        if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.close() }
-        }) { eventMonitors.append(m) }
-        observers.append(NotificationCenter.default.addObserver(forName: NSWorkspace.didActivateApplicationNotification,
-                                                               object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.close() }
-        })
     }
 
     func close() {

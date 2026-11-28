@@ -10,7 +10,7 @@ A lightweight macOS menu bar app that shows how much of your **Claude Code** and
 <p>
   <img src="docs/images/popover-claude.png" alt="Claude Code panel with 5-hour and 7-day bars and reset times" width="280">
   <img src="docs/images/popover-codex.png" alt="Codex panel" width="280">
-  <img src="docs/images/popover-github.png" alt="GitHub Actions panel: a free-plus-budget bar split into blue (free) and orange (budget), the budget on its own, the amount spent and a Set budget on GitHub button" width="280">
+  <img src="docs/images/popover-github.png" alt="GitHub Actions panel: a free-plus-budget bar split into blue (free) and orange (budget), the budget on its own, the amount spent, a Set budget on GitHub button, the daily chart, and a 13-week contribution graph with a hover bubble reading 69 contributions on November 19" width="280">
 </p>
 
 <sub>In these screenshots the Claude Code and Codex daily bars and the $10 GitHub budget are sample values; all other numbers are real.</sub>
@@ -116,6 +116,8 @@ Swift 5.10+ / Xcode 16+. Set `SIGN_IDENTITY` to a Developer ID Application ident
 CI runs the tests (the core logic, and each service's source with network calls replaced), builds the app exactly as released, and checks the language files inside the built app.
 
 To check the real services by hand, `"dist/TSAI UsageBar.app/Contents/MacOS/TSAIUsageBar" --check-sources` reads each one once (the same read-only requests the app makes) and prints what it got. Set `TSAI_USAGEBAR_SUPPORT_DIR` to a scratch folder to keep its stored values away from your installed app.
+
+The README panel pictures come from `--capture-panel <claude|codex|github> <file.png>`: one panel in English and dark appearance, drawn the way the camera button draws it, from the values stored on this Mac. `TSAI_PREVIEW_MODE=used`, `TSAI_PREVIEW_BUDGET=10` and `TSAI_PREVIEW_HOVER=yyyy-MM-dd` (a hovered contribution square) adjust it.
 
 ### Code layout
 
